@@ -88,6 +88,11 @@ h1.ttl{font-size:25px;line-height:1.14;margin-bottom:6px}
 .field label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px}
 .field input{width:100%;padding:13px 14px;border:1.5px solid var(--line2);border-radius:13px;font-size:15px;font-family:inherit;background:#fff;color:var(--ink)}
 .field input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 4px rgba(253,99,0,.13)}
+.pms-card{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px 15px;margin:4px 0 6px;box-shadow:0 10px 24px -20px rgba(0,0,0,.4)}
+.pms-logo{width:42px;height:42px;flex:0 0 42px;border-radius:12px;overflow:hidden;display:block}
+.pms-logo svg{width:100%;height:100%;display:block}
+.pms-meta{flex:1;min-width:0}.pms-meta b{display:block;color:var(--ink);font-size:15.5px;font-weight:700}.pms-meta span{font-size:12.5px;color:var(--muted)}
+.pms-ok{width:24px;height:24px;flex:0 0 24px;border-radius:50%;background:var(--ok-soft);color:var(--ok);display:grid;place-items:center;font-size:13px;font-weight:800}
 .secure{display:flex;gap:10px;align-items:flex-start;background:var(--ok-soft);border:1px solid #c7f0db;color:#067647;border-radius:13px;padding:12px 13px;font-size:12.5px;font-weight:500;margin:14px 0 0}
 .cspin{width:20px;height:20px;flex:0 0 20px;border-radius:50%;border:3px solid var(--peach);border-top-color:var(--orange);animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -173,7 +178,7 @@ h1.ttl{font-size:25px;line-height:1.14;margin-bottom:6px}
           <div class="k">Welcome, Dana</div>
           <h1>Activate your platform</h1>
           <p>You're almost set up. Link the system you use today and we'll migrate all your data into Hostaway.</p>
-          <button class="cta" onclick="go('business')">Get started →</button>
+          <button class="cta" onclick="go('link')">Get started →</button>
         </div>
         <div class="sect">What we'll bring over</div>
         <div class="feat">
@@ -183,37 +188,26 @@ h1.ttl{font-size:25px;line-height:1.14;margin-bottom:6px}
         </div>
       </section>
 
-      <!-- BUSINESS -->
-      <section class="scr" id="business">
-        <div class="pad">
-          <div class="k2">Step 1 of 3 · About you</div>
-          <h1 class="ttl">Confirm your business</h1>
-          <p class="lead">This tailors your workspace. You can change it later.</p>
-          <div class="field"><label>Company name</label><input id="company" value="Seaside Stays Co."></div>
-          <div class="field"><label>Work email</label><input value="dana@seasidestays.example"></div>
-          <div class="field"><label>Listings</label><input value="14"></div>
-        </div>
-        <div style="flex:1"></div>
-        <div class="foot"><button class="pbtn" onclick="go('link')">Continue</button></div>
-      </section>
-
       <!-- LINK PMS -->
       <section class="scr" id="link">
-        <div class="pad" id="link-intro">
+        <div class="pad">
           <div class="k2">Step 2 of 3 · Bring your data</div>
           <h1 class="ttl">Link your current PMS</h1>
-          <p class="lead">Sign in to the system you use today. We'll pull everything across.</p>
-          <div class="secure"><span>🔒</span><span>Your credentials go straight to our secure import partner and never pass through Hostaway.</span></div>
-          <div id="connecting" hidden style="display:flex;align-items:center;gap:12px;padding:22px 2px;color:var(--muted2);font-size:14px"><span class="cspin"></span><span>Preparing your secure connection…</span></div>
-          <div id="token-box" class="token-box" hidden>
-            <label style="font-size:12.5px;font-weight:700;color:var(--ink)">Session token</label>
-            <input id="token-in" placeholder="tk_..." style="width:100%;margin-top:6px;padding:12px;border:1.5px solid var(--line2);border-radius:11px;font-size:14px">
-            <button class="pbtn" style="margin-top:10px" onclick="startAuth(document.getElementById('token-in').value.trim())">Start secure connection</button>
-            <p class="muted" style="margin:10px 0 0;font-size:11.5px">Fallback entry. Normally the token is minted automatically on arrival (Hostaway calls <span class="mono">POST api.deck.co/v2/token</span>). You can also open with <span class="mono">?token=tk_…</span>.</p>
+          <p class="lead">Sign in to the system you use today and we'll bring everything across.</p>
+
+          <div class="pms-card">
+            <span class="pms-logo"><svg viewBox="0 0 100 100" aria-label="Guesty"><rect width="100" height="100" rx="26" fill="#007a67"/><path fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" d="M66 36a19 19 0 1 0 0 28"/><path fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" d="M66 33v34c0 13-9 19-21 19"/></svg></span>
+            <div class="pms-meta"><b>Guesty</b><span>Property management system</span></div>
+            <span class="pms-ok">✓</span>
           </div>
+
+          <div class="field"><label>Email</label><input id="g-email" type="email" autocomplete="username" value="dana@seasidestays.example"></div>
+          <div class="field"><label>Password</label><input id="g-pass" type="password" autocomplete="current-password" value="guesty-demo"></div>
+          <div class="secure"><span>🔒</span><span>Your credentials go straight to our secure import partner and are never stored by Hostaway.</span></div>
           <div id="auth-err" class="err" hidden></div>
         </div>
-        <iframe id="deck-frame" hidden title="Connect your PMS" allow="clipboard-write"></iframe>
+        <div style="flex:1"></div>
+        <div class="foot"><button class="pbtn" id="connect-btn" onclick="connectGuesty()">Connect Guesty &amp; migrate</button></div>
       </section>
 
       <!-- MIGRATE -->
@@ -245,14 +239,12 @@ h1.ttl{font-size:25px;line-height:1.14;margin-bottom:6px}
 </div>
 
 <script>
-const AUTH_ORIGIN = "https://auth.components.deck.co";
+const API = "https://api.deck.co/v2";
 const WORKFLOW_ID = "wflo_Mv1Joi10ObkPVMRe";
-const SOURCES = ["src_ARv8oS7CVYhb6bbk","src_Z5d5QDfhVkwON7il","src_2anDOxPk0TEbgfOr","src_zjKQ0xPt1WPceAII",
-  "src_Mw8UgS7QziqoCiCt","src_j7hFzFrlUBsBP3Os","src_KFwPlvP7Rm9i41NA","src_WIRl5lyxFNPomsk2","src_A9PCAIWCwAqEGkFG",
-  "src_WlyVa46W4JmJ8bUZ","src_U1WC1KcfomN29LDz","src_L0C96f6QjOYiblR6"];
+const SOURCE_ID = "src_ARv8oS7CVYhb6bbk";
 const params = new URLSearchParams(location.search);
-const ORDER = ["home","business","link","migrate"];
-let started = false, cur = "home";
+const ORDER = ["home","link","migrate"];
+let cur = "home", _tok = null;
 
 // live clock
 (function clk(){ const d=new Date(); document.getElementById("clock").textContent = d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}); setTimeout(clk, 20000); })();
@@ -262,56 +254,48 @@ function go(id){
   cur = id;
   document.getElementById("back").classList.toggle("show", id!=="home" && id!=="migrate");
   document.getElementById("body").scrollTop = 0;
-  if (id==="link" && !started) ensureToken();
+  if (id==="link") getToken().catch(()=>{});   // pre-warm the session token
 }
 function back(){ const i=ORDER.indexOf(cur); if(i>0) go(ORDER[Math.max(0,i-1)]); }
 
-async function ensureToken(){
-  const t = params.get("token");
-  if (t) return startAuth(t);
-  const conn = document.getElementById("connecting"); conn.hidden = false;
-  const label = conn.querySelector("span:last-child");
-  const debug = params.get("debug") === "1";
-  for (let i = 0; i < 20; i++){
-    try{
-      const r = await fetch("token.json?cb=" + Date.now(), {cache:"no-store"});
-      if (r.ok){ const j = await r.json(); if (j && j.token){ conn.hidden = true; return startAuth(j.token); } }
-    }catch(e){}
-    if (i === 3) label.textContent = "Securing your connection…";
-    if (i === 9) label.textContent = "Almost ready…";
-    await new Promise(res => setTimeout(res, 2500));
-  }
-  // Only reached if a token never becomes available. Keep it calm for a demo.
-  label.textContent = "Connection is taking longer than usual.";
-  if (debug) document.getElementById("token-box").hidden = false;
+async function getToken(){
+  if (_tok) return _tok;
+  const t = params.get("token"); if (t) return (_tok = t);
+  const r = await fetch("token.json?cb=" + Date.now(), {cache:"no-store"});
+  if (!r.ok) throw new Error("secure session not ready");
+  const j = await r.json(); if (!j || !j.token) throw new Error("secure session not ready");
+  return (_tok = j.token);
 }
 
-function startAuth(token){
-  if(!token) return;
-  started = true;
-  document.getElementById("link-intro").hidden = true;
-  const f = document.getElementById("deck-frame"); f.hidden = false; f.src = AUTH_ORIGIN + "/";
-  window.addEventListener("message", (e) => {
-    if (e.origin !== AUTH_ORIGIN) return;
-    const m = e.data || {};
-    if (m.type === "READY") {
-      f.contentWindow.postMessage({ type:"INIT", payload:{
-        token, sourceId: SOURCES, sourceConfig:null, credentialId:null,
-        externalId: "hostaway_demo_" + (document.getElementById("company").value||"customer").toLowerCase().replace(/[^a-z0-9]+/g,"_"),
-        taskId:null, taskInput:null, workflowId: WORKFLOW_ID, workflowInput:null, closeAfterStep:null,
-        showStepProgress:true, appearance:{ theme:"default", variables:{ colorPrimary:"#fd6300", borderRadius:"12px" } },
-        taskRunView:"status", language:"en-US", showCloseButton:false, credentialPersistence:false, mode:"auth" } }, AUTH_ORIGIN);
-    } else if (m.type === "SUCCESS") {
-      const p = m.payload || {};
-      document.getElementById("wrun").textContent = p.workflowRunId || "—";
-      document.getElementById("cred").textContent = p.credentialId || "—";
-      showMigration();
-    } else if (m.type === "ERROR") {
-      const p = m.payload || {}; const el = document.getElementById("auth-err");
-      document.getElementById("link-intro").hidden = false; f.hidden = true;
-      el.textContent = "Connection error: " + (p.code||"") + " " + (p.message||""); el.hidden = false;
-    }
-  });
+async function connectGuesty(){
+  const btn = document.getElementById("connect-btn");
+  const err = document.getElementById("auth-err"); err.hidden = true;
+  const email = document.getElementById("g-email").value.trim();
+  const pass  = document.getElementById("g-pass").value;
+  if (!email || !pass){ err.textContent = "Enter your Guesty email and password."; err.hidden = false; return; }
+  const orig = btn.textContent; btn.disabled = true;
+  btn.innerHTML = '<span class="cspin" style="border-color:rgba(255,255,255,.45);border-top-color:#fff;vertical-align:-4px"></span> Connecting to Guesty…';
+  try{
+    const token = await getToken();
+    const H = { "Authorization":"Bearer " + token, "Content-Type":"application/json" };
+    // 1) create the credential (headless — our own UI, no Deck-branded picker)
+    const cRes = await fetch(API + "/credentials", { method:"POST", headers:H, body: JSON.stringify({
+      source_id: SOURCE_ID, auth_method:"username_password",
+      auth_credentials:{ username: email, password: pass },
+      external_id: "hostaway_demo_" + Date.now() }) });
+    const cred = await cRes.json();
+    if (!cred.id) throw new Error((cred.errors && cred.errors[0] && cred.errors[0].message) || "could not sign in");
+    // 2) kick off the real migration workflow
+    const rRes = await fetch(API + "/workflows/" + WORKFLOW_ID + "/run", { method:"POST", headers:H,
+      body: JSON.stringify({ credential_id: cred.id }) });
+    const run = await rRes.json();
+    document.getElementById("cred").textContent = cred.id;
+    document.getElementById("wrun").textContent = run.id || "—";
+    showMigration();
+  }catch(e){
+    btn.disabled = false; btn.textContent = orig;
+    err.textContent = "Couldn't connect: " + (e.message || e); err.hidden = false;
+  }
 }
 
 function showMigration(){
