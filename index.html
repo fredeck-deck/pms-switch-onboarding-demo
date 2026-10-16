@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Activate your platform · Hostaway</title>
 <meta name="description" content="Welcome to Hostaway — activate your platform by linking your previous PMS and migrating all your data automagically.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -16,295 +16,290 @@
 <style>
 :root{
   --orange:#fd6300; --orange-deep:#e25600; --orange-ink:#b94d00;
-  --ink:#0d0d0d; --body:#2b2b2b; --muted:#6b6f76;
-  --bg:#fdfaf7; --card:#ffffff; --peach:#ffeadd; --peach-soft:#fff6ef; --cream:#fff9f5;
-  --line:#efe7df; --line-strong:#e4d8cc;
+  --ink:#0d0d0d; --body:#2b2b2b; --muted:#8a8f98; --muted2:#6b6f76;
+  --card:#ffffff; --peach:#ffe3d1; --peach-soft:#fff4ec; --cream:#fff9f5;
+  --line:#eee7e0; --line2:#e4dad0;
   --ok:#12b76a; --ok-soft:#e9fbf2;
-  --radius:18px; --shadow:0 2px 4px rgba(13,13,13,.03),0 22px 48px -28px rgba(185,77,0,.30);
+  --app-bg:#f6f4f1;
 }
-*{box-sizing:border-box}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
-body{margin:0;font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-  color:var(--body);background:var(--bg);-webkit-font-smoothing:antialiased;line-height:1.5}
+body{margin:0;font-family:'Plus Jakarta Sans',-apple-system,system-ui,Segoe UI,Roboto,sans-serif;color:var(--body);
+  background:radial-gradient(1200px 700px at 50% -5%, #3a2a20 0%, #211a16 42%, #15110e 100%);
+  -webkit-font-smoothing:antialiased;line-height:1.5;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px 16px}
 h1,h2,h3{color:var(--ink);letter-spacing:-.02em;margin:0}
-a{color:var(--orange)}
-.demo-pill{position:fixed;top:14px;right:16px;z-index:60;font-size:11.5px;font-weight:600;color:var(--orange-ink);
-  background:#fff;border:1px solid var(--line-strong);border-radius:999px;padding:6px 12px;display:flex;align-items:center;gap:7px;box-shadow:var(--shadow)}
-.demo-pill .d{width:7px;height:7px;border-radius:50%;background:var(--orange)}
 
-/* ---------- layout: brand rail + stage ---------- */
-.shell{display:grid;grid-template-columns:360px 1fr;min-height:100vh}
-.rail{background:linear-gradient(185deg,#1b1a19 0%,#2a211c 55%,#3a2419 100%);color:#f6efe8;padding:40px 38px;display:flex;flex-direction:column;position:relative;overflow:hidden}
-.rail::after{content:"";position:absolute;right:-120px;top:-120px;width:360px;height:360px;border-radius:50%;
-  background:radial-gradient(circle,rgba(253,99,0,.55),transparent 62%);filter:blur(10px)}
-.logo{display:flex;align-items:center;gap:11px;font-weight:800;font-size:22px;color:#fff;letter-spacing:-.03em;z-index:1}
-.logo .mark{width:34px;height:34px;border-radius:10px;background:var(--orange);display:grid;place-items:center;box-shadow:0 6px 16px -6px rgba(253,99,0,.8)}
-.logo .mark svg{width:20px;height:20px}
-.rail .pitch{margin-top:auto;z-index:1}
-.rail h2{color:#fff;font-size:27px;line-height:1.2;margin-bottom:14px}
-.rail h2 em{color:var(--orange);font-style:normal}
-.rail p{color:#c8bcb2;font-size:14.5px;margin:0 0 26px;max-width:260px}
-.rail .reasons{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:14px}
-.rail .reasons li{display:flex;gap:12px;align-items:flex-start;font-size:13.5px;color:#e7ddd4}
-.rail .reasons .ic{flex:0 0 26px;width:26px;height:26px;border-radius:8px;background:rgba(253,99,0,.16);color:var(--orange);display:grid;place-items:center;font-size:14px}
-.rail .foot{margin-top:28px;font-size:11.5px;color:#8f847b;z-index:1}
+/* desktop context around the phone */
+.context{position:fixed;left:48px;top:0;bottom:0;width:360px;display:flex;flex-direction:column;justify-content:center;gap:18px;color:#f0e8e0;z-index:1}
+.context .logo{display:flex;align-items:center;gap:11px;font-weight:800;font-size:23px;color:#fff;letter-spacing:-.03em}
+.context .logo .mk{width:36px;height:36px;border-radius:10px;background:var(--orange);display:grid;place-items:center;box-shadow:0 8px 20px -6px rgba(253,99,0,.8)}
+.context .logo .mk svg{width:21px;height:21px}
+.context h2{color:#fff;font-size:30px;line-height:1.18}.context h2 em{color:var(--orange);font-style:normal}
+.context p{color:#bdb0a6;font-size:15px;margin:0;max-width:300px}
+.context .scan{margin-top:6px;font-size:12.5px;color:#8c8178}
+@media(max-width:1180px){.context{display:none}}
 
-/* ---------- steps progress ---------- */
-.stage{padding:0;display:flex;flex-direction:column;background:var(--bg)}
-.stepbar{display:flex;gap:28px;padding:26px 52px 0;flex-wrap:wrap}
-.stepbar .s{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;font-weight:600}
-.stepbar .s .n{width:26px;height:26px;border-radius:50%;border:2px solid var(--line-strong);display:grid;place-items:center;font-size:12.5px;background:#fff;transition:.2s}
-.stepbar .s.on{color:var(--ink)}.stepbar .s.on .n{border-color:var(--orange);color:var(--orange)}
-.stepbar .s.done .n{background:var(--ok);border-color:var(--ok);color:#fff}
-.stepbar .s.done{color:var(--ink)}
+/* phone frame */
+.phone{position:relative;width:398px;height:844px;background:#000;border-radius:58px;padding:13px;
+  box-shadow:0 0 0 2px #2a2a2a, 0 50px 90px -30px rgba(0,0,0,.75);z-index:2;flex:0 0 auto}
+.screen{position:relative;width:100%;height:100%;background:var(--app-bg);border-radius:46px;overflow:hidden;display:flex;flex-direction:column}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:122px;height:34px;background:#000;border-radius:20px;z-index:40}
+/* iOS status bar */
+.status{height:54px;flex:0 0 54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 7px;font-size:14px;font-weight:700;color:var(--ink);z-index:30}
+.status .r{display:flex;align-items:center;gap:6px}
+.status svg{display:block}
 
-.stagebody{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:34px 52px 60px}
-.panel{width:100%;max-width:620px;animation:rise .4s cubic-bezier(.2,.7,.2,1)}
-@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:34px 36px;box-shadow:var(--shadow)}
-.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--orange-ink);margin-bottom:12px}
-h1.title{font-size:30px;line-height:1.14;margin-bottom:10px}
-p.lead{color:var(--muted);font-size:15.5px;margin:0 0 26px;max-width:46ch}
+/* app bar */
+.appbar{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:6px 18px 12px;background:var(--app-bg)}
+.appbar .back{width:34px;height:34px;border-radius:50%;border:1px solid var(--line2);background:#fff;display:none;place-items:center;cursor:pointer;color:var(--ink);flex:0 0 34px}
+.appbar .back.show{display:grid}
+.appbar .wm{display:flex;align-items:center;gap:8px;font-weight:800;font-size:18px;color:var(--ink);letter-spacing:-.02em}
+.appbar .wm .mk{width:26px;height:26px;border-radius:7px;background:var(--orange);display:grid;place-items:center}
+.appbar .wm .mk svg{width:15px;height:15px}
+.appbar .sbadge{margin-left:auto;font-size:9.5px;font-weight:700;color:var(--orange-ink);background:var(--peach-soft);border:1px solid #fbd6bf;padding:3px 7px;border-radius:999px;letter-spacing:.02em}
 
-label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin:16px 0 7px}
-input{width:100%;padding:13px 14px;border:1.5px solid var(--line-strong);border-radius:12px;font-size:15px;font-family:inherit;background:#fff;color:var(--ink);transition:.15s}
-input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 4px rgba(253,99,0,.13)}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.btn{background:var(--orange);color:#fff;border:0;border-radius:12px;padding:14px 26px;font-size:15.5px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:26px;display:inline-flex;align-items:center;gap:9px;transition:.15s;box-shadow:0 10px 22px -12px rgba(253,99,0,.8)}
-.btn:hover{background:var(--orange-deep);transform:translateY(-1px)}
-.btn.block{width:100%;justify-content:center}
-.btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line-strong);box-shadow:none}
-.btn.ghost:hover{background:var(--cream);transform:none}
-.btnrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+/* scroll body */
+.body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.scr{display:none;flex-direction:column;min-height:100%;animation:slide .32s cubic-bezier(.2,.7,.2,1)}
+.scr.on{display:flex}
+@keyframes slide{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+.pad{padding:8px 20px 24px}
 
-/* choice cards */
-.choices{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
-.choice{text-align:left;border:1.5px solid var(--line-strong);background:#fff;border-radius:14px;padding:18px;cursor:pointer;transition:.15s;font-family:inherit}
-.choice:hover{border-color:var(--orange);background:var(--peach-soft);transform:translateY(-2px)}
-.choice .ci{width:38px;height:38px;border-radius:10px;background:var(--peach-soft);color:var(--orange);display:grid;place-items:center;margin-bottom:12px;font-size:19px}
-.choice b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
-.choice span{color:var(--muted);font-size:13px;line-height:1.45}
-.choice.reco{border-color:var(--orange);box-shadow:0 0 0 4px rgba(253,99,0,.10)}
-.tag{display:inline-block;font-size:11px;font-weight:700;color:var(--orange-ink);background:var(--peach-soft);border:1px solid #fcd9c0;padding:2px 9px;border-radius:999px;margin-left:8px}
+/* home */
+.hero{margin:4px 20px 0;padding:22px;border-radius:22px;background:linear-gradient(145deg,#fd6300,#ff8a3d);color:#fff;box-shadow:0 18px 34px -20px rgba(253,99,0,.9);position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-50px;bottom:-60px;width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.14)}
+.hero .k{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.9}
+.hero h1{color:#fff;font-size:25px;line-height:1.14;margin:7px 0 8px}
+.hero p{margin:0 0 18px;font-size:14px;color:#fff;opacity:.95}
+.hero .cta{display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--orange-deep);border:0;border-radius:13px;padding:13px 20px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer;width:100%;justify-content:center;box-shadow:0 8px 18px -8px rgba(0,0,0,.3)}
+.sect{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:22px 20px 10px}
+.feat{margin:0 20px;display:flex;flex-direction:column;gap:10px}
+.frow{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 15px}
+.frow .fi{width:40px;height:40px;flex:0 0 40px;border-radius:12px;background:var(--peach-soft);color:var(--orange);display:grid;place-items:center;font-size:19px}
+.frow b{display:block;color:var(--ink);font-size:14.5px;font-weight:700}
+.frow span{font-size:12.5px;color:var(--muted2)}
+.frow .chev{margin-left:auto;color:#c7ccd3}
 
-/* connect */
-.secure{display:flex;gap:12px;align-items:center;background:var(--ok-soft);border:1px solid #c7f0db;color:#067647;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:500;margin:0 0 18px}
-.cspin{width:22px;height:22px;flex:0 0 22px;border-radius:50%;border:3px solid var(--peach);border-top-color:var(--orange);animation:spin .9s linear infinite}
-#deck-frame{width:100%;min-height:560px;border:1px solid var(--line);border-radius:14px;background:#fff}
-.token-box{background:var(--cream);border:1px dashed var(--line-strong);border-radius:14px;padding:18px}
-.err{background:#fef3f0;color:#b42318;border:1px solid #f6cfc5;padding:13px 15px;border-radius:12px;margin-top:16px;font-size:14px}
-.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px}
-.muted{color:var(--muted)}
-
-/* ---------- migration screen ---------- */
-.mig-head{display:flex;align-items:center;gap:16px;margin-bottom:8px}
-.mig-head .spin{width:46px;height:46px;flex:0 0 46px;border-radius:50%;border:4px solid var(--peach);border-top-color:var(--orange);animation:spin .9s linear infinite}
-.mig-head.done .spin{border:0;background:var(--ok);display:grid;place-items:center;animation:pop .4s cubic-bezier(.2,1.4,.4,1)}
-.mig-head.done .spin svg{width:26px;height:26px}
+/* generic content */
+.lead{color:var(--muted2);font-size:14.5px;margin:4px 0 18px}
+.k2{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--orange-ink);margin-bottom:8px}
+h1.ttl{font-size:25px;line-height:1.14;margin-bottom:6px}
+.field{margin-top:14px}
+.field label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.field input{width:100%;padding:13px 14px;border:1.5px solid var(--line2);border-radius:13px;font-size:15px;font-family:inherit;background:#fff;color:var(--ink)}
+.field input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 4px rgba(253,99,0,.13)}
+.secure{display:flex;gap:10px;align-items:flex-start;background:var(--ok-soft);border:1px solid #c7f0db;color:#067647;border-radius:13px;padding:12px 13px;font-size:12.5px;font-weight:500;margin:14px 0 0}
+.cspin{width:20px;height:20px;flex:0 0 20px;border-radius:50%;border:3px solid var(--peach);border-top-color:var(--orange);animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+#deck-frame{width:100%;flex:1;min-height:460px;border:0;background:#fff}
+.token-box{background:var(--cream);border:1px dashed var(--line2);border-radius:14px;padding:16px;margin-top:14px}
+.err{background:#fef3f0;color:#b42318;border:1px solid #f6cfc5;padding:12px;border-radius:12px;margin-top:12px;font-size:13px}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.muted{color:var(--muted2)}
+
+/* sticky bottom action */
+.foot{flex:0 0 auto;padding:12px 20px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(0deg,var(--app-bg) 70%,transparent);border-top:1px solid rgba(0,0,0,.04)}
+.pbtn{width:100%;background:var(--orange);color:#fff;border:0;border-radius:15px;padding:15px;font-size:16px;font-weight:800;font-family:inherit;cursor:pointer;box-shadow:0 12px 24px -12px rgba(253,99,0,.9)}
+.pbtn:active{transform:translateY(1px)}
+.pbtn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line2);box-shadow:none;margin-top:9px}
+
+/* migration */
+.mig-top{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.mig-top .ring{width:44px;height:44px;flex:0 0 44px;border-radius:50%;border:4px solid var(--peach);border-top-color:var(--orange);animation:spin .9s linear infinite}
+.mig-top.done .ring{border:0;background:var(--ok);display:grid;place-items:center;animation:pop .4s cubic-bezier(.2,1.4,.4,1)}
+.mig-top.done .ring svg{width:24px;height:24px}
 @keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
-.bar{height:9px;border-radius:999px;background:var(--peach);overflow:hidden;margin:20px 0 26px}
+.bar{height:8px;border-radius:999px;background:var(--peach);overflow:hidden;margin:16px 0 20px}
 .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#fd6300,#ff9d28);border-radius:999px;transition:width .6s cubic-bezier(.3,.7,.3,1)}
-.prog{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:2px}
-.prog li{display:flex;align-items:center;gap:14px;padding:14px 4px;border-bottom:1px solid var(--line)}
-.prog li:last-child{border-bottom:0}
-.prog .pi{width:34px;height:34px;flex:0 0 34px;border-radius:10px;background:var(--cream);display:grid;place-items:center;color:var(--muted)}
+.prog{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:9px}
+.prog li{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 13px}
+.prog .pi{width:32px;height:32px;flex:0 0 32px;border-radius:9px;background:var(--cream);display:grid;place-items:center;color:var(--muted);font-size:15px}
 .prog li.run .pi{background:var(--peach-soft);color:var(--orange)}
 .prog li.ok .pi{background:var(--ok-soft);color:var(--ok)}
-.prog .pt{flex:1;min-width:0}
-.prog .pt b{display:block;color:var(--ink);font-size:14.5px;font-weight:600}
-.prog .pt span{font-size:12.5px;color:var(--muted)}
-.pill{font-size:12px;font-weight:700;padding:4px 11px;border-radius:999px;background:#f1efec;color:var(--muted)}
-.pill.run{background:var(--peach-soft);color:var(--orange-ink)}
-.pill.ok{background:var(--ok-soft);color:#067647}
-.meta{margin-top:22px;font-size:12px;color:var(--muted);display:flex;gap:18px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:16px}
-.success-cta{margin-top:26px;padding:22px;border-radius:14px;background:linear-gradient(120deg,var(--peach-soft),#fff);border:1px solid #fcd9c0}
-.success-cta h3{font-size:19px;margin-bottom:6px}
+.prog .pt{flex:1;min-width:0}.prog .pt b{display:block;color:var(--ink);font-size:13.5px;font-weight:700}
+.prog .pt span{font-size:11.5px;color:var(--muted)}
+.prog .pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:#f1efec;color:var(--muted)}
+.prog .pill.run{background:var(--peach-soft);color:var(--orange-ink)}.prog .pill.ok{background:var(--ok-soft);color:#067647}
+.done-hero{text-align:center;padding:30px 10px 8px}
+.done-hero .big{width:84px;height:84px;margin:0 auto 16px;border-radius:50%;background:var(--ok-soft);display:grid;place-items:center;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+.done-hero .big svg{width:46px;height:46px}
+.done-hero h1{font-size:25px;margin-bottom:8px}
+.done-hero p{color:var(--muted2);font-size:14.5px;margin:0 20px}
+.meta{margin-top:16px;font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding-top:12px}
 
-@media(max-width:900px){
-  .shell{grid-template-columns:1fr}
-  .rail{padding:28px 24px}.rail .pitch{margin-top:28px}
-  .stepbar{padding:22px 24px 0;gap:16px}.stagebody{padding:24px 18px 48px}
-  .card{padding:26px 22px}.row,.choices{grid-template-columns:1fr}
-  h1.title{font-size:25px}
+/* full screen on real phones */
+@media(max-width:640px){
+  body{padding:0;background:var(--app-bg);display:block}
+  .phone{width:100vw;height:100vh;height:100dvh;border-radius:0;padding:0;box-shadow:none;background:var(--app-bg)}
+  .screen{border-radius:0}
+  .island{display:none}
+  .status{height:max(44px,env(safe-area-inset-top));padding-bottom:2px}
 }
 </style>
 </head>
 <body>
-<div class="demo-pill"><span class="d"></span>Synthetic demo · not the live Hostaway app</div>
+<div class="context">
+  <div class="logo"><span class="mk"><svg viewBox="0 0 24 24" fill="none"><path d="M4 11.5 12 4l8 7.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10.5V20h12v-9.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 20v-5h4v5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>hostaway</div>
+  <h2>Activate in the app.<br>Bring <em>everything</em> with you.</h2>
+  <p>This is the Hostaway mobile activation. Link your current PMS and watch every listing, booking and calendar migrate — automagically.</p>
+  <div class="scan">Synthetic demo environment · not the live Hostaway app</div>
+</div>
 
-<div class="shell">
-  <!-- brand rail -->
-  <aside class="rail">
-    <div class="logo">
-      <span class="mark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 11.5 12 4l8 7.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10.5V20h12v-9.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 20v-5h4v5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      hostaway
+<div class="phone">
+  <div class="island"></div>
+  <div class="screen">
+    <!-- status bar -->
+    <div class="status">
+      <span id="clock">9:41</span>
+      <span class="r">
+        <svg width="18" height="12" viewBox="0 0 18 12" fill="none"><rect x="0" y="7" width="3" height="5" rx="1" fill="#0d0d0d"/><rect x="5" y="4" width="3" height="8" rx="1" fill="#0d0d0d"/><rect x="10" y="1.5" width="3" height="10.5" rx="1" fill="#0d0d0d"/><rect x="15" y="0" width="3" height="12" rx="1" fill="#0d0d0d" opacity=".3"/></svg>
+        <svg width="17" height="12" viewBox="0 0 17 12" fill="none"><path d="M8.5 2.5c2.3 0 4.4.9 6 2.4l-1.4 1.5A6.6 6.6 0 0 0 8.5 4.5 6.6 6.6 0 0 0 3.9 6.4L2.5 4.9A8.6 8.6 0 0 1 8.5 2.5Z" fill="#0d0d0d"/><path d="M8.5 6.2c1.3 0 2.5.5 3.4 1.4L8.5 11 5.1 7.6A4.8 4.8 0 0 1 8.5 6.2Z" fill="#0d0d0d"/></svg>
+        <svg width="26" height="13" viewBox="0 0 26 13" fill="none"><rect x="1" y="1" width="21" height="11" rx="3" stroke="#0d0d0d" stroke-opacity=".4"/><rect x="2.5" y="2.5" width="16" height="8" rx="1.6" fill="#0d0d0d"/><rect x="23" y="4.5" width="2" height="4" rx="1" fill="#0d0d0d" opacity=".4"/></svg>
+      </span>
     </div>
-    <div class="pitch">
-      <h2>Switch in minutes.<br>Bring <em>everything</em> with you.</h2>
-      <p>Link your current property management system and we'll migrate your listings, reservations, calendars, guests and owners — automagically.</p>
-      <ul class="reasons">
-        <li><span class="ic">✓</span><div>No spreadsheets, no copy-paste. We read it straight from your old PMS.</div></li>
-        <li><span class="ic">⤓</span><div>Listings, photos, channels, rates &amp; future bookings — all carried over.</div></li>
-        <li><span class="ic">🔒</span><div>Your credentials go straight to our secure import partner, never stored by Hostaway.</div></li>
-      </ul>
-    </div>
-    <div class="foot">Activation powered by Deck · Synthetic demo environment</div>
-  </aside>
 
-  <!-- stage -->
-  <main class="stage">
-    <div class="stepbar" id="stepbar">
-      <div class="s on" data-s="1"><span class="n">1</span>Welcome</div>
-      <div class="s" data-s="2"><span class="n">2</span>Your business</div>
-      <div class="s" data-s="3"><span class="n">3</span>Link your PMS</div>
-      <div class="s" data-s="4"><span class="n">4</span>Migrate</div>
+    <!-- app bar -->
+    <div class="appbar">
+      <div class="back" id="back" onclick="back()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="#0d0d0d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="wm"><span class="mk"><svg viewBox="0 0 24 24" fill="none"><path d="M4 11.5 12 4l8 7.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10.5V20h12v-9.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>hostaway</div>
+      <span class="sbadge">DEMO</span>
     </div>
-    <div class="stagebody">
-      <div class="panel">
 
-        <!-- 1: welcome / activate -->
-        <section id="s1">
-          <div class="card">
-            <div class="eyebrow">Welcome to Hostaway</div>
-            <h1 class="title">Let's activate your platform, Dana.</h1>
-            <p class="lead">Your Hostaway workspace is ready. Activate it by linking the system you use today — and we'll bring all your data across for you.</p>
-            <div class="btnrow">
-              <button class="btn" onclick="go(2)">Activate my platform →</button>
-              <button class="btn ghost" onclick="go(2)">I'll set up manually</button>
+    <div class="body" id="body">
+
+      <!-- HOME -->
+      <section class="scr on" id="home">
+        <div class="hero">
+          <div class="k">Welcome, Dana</div>
+          <h1>Activate your platform</h1>
+          <p>You're almost set up. Link the system you use today and we'll migrate all your data into Hostaway.</p>
+          <button class="cta" onclick="go('business')">Get started →</button>
+        </div>
+        <div class="sect">What we'll bring over</div>
+        <div class="feat">
+          <div class="frow"><span class="fi">🏠</span><div><b>Listings &amp; photos</b><span>Descriptions, amenities, channels</span></div><span class="chev">›</span></div>
+          <div class="frow"><span class="fi">📅</span><div><b>Reservations &amp; calendars</b><span>Past &amp; future bookings, rates</span></div><span class="chev">›</span></div>
+          <div class="frow"><span class="fi">👥</span><div><b>Guests &amp; owners</b><span>Contacts, commissions, payouts</span></div><span class="chev">›</span></div>
+        </div>
+      </section>
+
+      <!-- BUSINESS -->
+      <section class="scr" id="business">
+        <div class="pad">
+          <div class="k2">Step 1 of 3 · About you</div>
+          <h1 class="ttl">Confirm your business</h1>
+          <p class="lead">This tailors your workspace. You can change it later.</p>
+          <div class="field"><label>Company name</label><input id="company" value="Seaside Stays Co."></div>
+          <div class="field"><label>Work email</label><input value="dana@seasidestays.example"></div>
+          <div class="field"><label>Listings</label><input value="14"></div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="foot"><button class="pbtn" onclick="go('link')">Continue</button></div>
+      </section>
+
+      <!-- LINK PMS -->
+      <section class="scr" id="link">
+        <div class="pad" id="link-intro">
+          <div class="k2">Step 2 of 3 · Bring your data</div>
+          <h1 class="ttl">Link your current PMS</h1>
+          <p class="lead">Sign in to the system you use today. We'll pull everything across.</p>
+          <div class="secure"><span>🔒</span><span>Your credentials go straight to our secure import partner and never pass through Hostaway.</span></div>
+          <div id="connecting" hidden style="display:flex;align-items:center;gap:12px;padding:22px 2px;color:var(--muted2);font-size:14px"><span class="cspin"></span><span>Preparing your secure connection…</span></div>
+          <div id="token-box" class="token-box" hidden>
+            <label style="font-size:12.5px;font-weight:700;color:var(--ink)">Session token</label>
+            <input id="token-in" placeholder="tk_..." style="width:100%;margin-top:6px;padding:12px;border:1.5px solid var(--line2);border-radius:11px;font-size:14px">
+            <button class="pbtn" style="margin-top:10px" onclick="startAuth(document.getElementById('token-in').value.trim())">Start secure connection</button>
+            <p class="muted" style="margin:10px 0 0;font-size:11.5px">Fallback entry. Normally the token is minted automatically on arrival (Hostaway calls <span class="mono">POST api.deck.co/v2/token</span>). You can also open with <span class="mono">?token=tk_…</span>.</p>
+          </div>
+          <div id="auth-err" class="err" hidden></div>
+        </div>
+        <iframe id="deck-frame" hidden title="Connect your PMS" allow="clipboard-write"></iframe>
+      </section>
+
+      <!-- MIGRATE -->
+      <section class="scr" id="migrate">
+        <div class="pad">
+          <div class="mig-top" id="mig-top">
+            <div class="ring" id="mig-ring"></div>
+            <div><div class="k2" style="margin-bottom:3px">Step 3 of 3</div><h1 class="ttl" id="mig-title" style="font-size:21px">Migrating, automagically…</h1></div>
+          </div>
+          <p class="lead" id="mig-sub" style="margin:10px 0 0">We're bringing everything from your previous PMS into Hostaway. This usually takes a moment.</p>
+          <div class="bar"><i id="mig-bar"></i></div>
+          <ul class="prog" id="prog"></ul>
+
+          <div id="done-block" hidden>
+            <div class="done-hero">
+              <div class="big"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="#12b76a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <h1>You're all set 🎉</h1>
+              <p>Everything from your previous PMS is now in Hostaway. Welcome aboard.</p>
             </div>
           </div>
-        </section>
+          <div class="meta"><span>Import run <span class="mono" id="wrun">—</span></span><span>Credential <span class="mono" id="cred">—</span></span></div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="foot" id="done-foot" hidden><button class="pbtn" onclick="alert('Demo: this would open your Hostaway dashboard.')">Go to my dashboard</button></div>
+      </section>
 
-        <!-- 2: business -->
-        <section id="s2" hidden>
-          <div class="card">
-            <div class="eyebrow">Step 1 of 3 · About you</div>
-            <h1 class="title">Tell us about your business</h1>
-            <p class="lead">This tailors your workspace. You can change any of it later.</p>
-            <div class="row">
-              <div><label>Company name</label><input id="company" value="Seaside Stays Co."></div>
-              <div><label>Work email</label><input value="dana@seasidestays.example"></div>
-            </div>
-            <div class="row">
-              <div><label>Number of listings</label><input value="14"></div>
-              <div><label>Country</label><input value="United States"></div>
-            </div>
-            <button class="btn" onclick="go(3)">Continue →</button>
-          </div>
-        </section>
-
-        <!-- 3: link PMS -->
-        <section id="s3" hidden>
-          <div class="card">
-            <div class="eyebrow">Step 2 of 3 · Bring your data</div>
-            <h1 class="title">Link your current PMS</h1>
-            <p class="lead">Sign in to the system you use today. We'll pull everything across so you start fully set up.</p>
-            <div class="secure">🔒 Your credentials go straight to our secure import partner and never pass through Hostaway.</div>
-
-            <div id="connecting" hidden style="display:flex;align-items:center;gap:14px;padding:26px 4px;color:var(--muted)">
-              <span class="cspin"></span><span>Preparing your secure connection…</span>
-            </div>
-            <iframe id="deck-frame" hidden title="Connect your PMS" allow="clipboard-write"></iframe>
-            <div id="token-box" class="token-box" hidden>
-              <label style="margin-top:0">Session token</label>
-              <input id="token-in" placeholder="tk_...">
-              <button class="btn" onclick="startAuth(document.getElementById('token-in').value.trim())">Start secure connection</button>
-              <p class="muted" style="margin:14px 0 0;font-size:12.5px">Fallback entry. Normally the token is minted automatically the moment you reach this step (Hostaway's backend calls <span class="mono">POST https://api.deck.co/v2/token</span>). You can also open this page with <span class="mono">?token=tk_…</span>.</p>
-            </div>
-            <div id="auth-err" class="err" hidden></div>
-          </div>
-        </section>
-
-        <!-- 4: migrate -->
-        <section id="s4" hidden>
-          <div class="card">
-            <div class="mig-head" id="mig-head">
-              <div class="spin" id="mig-spin"></div>
-              <div>
-                <div class="eyebrow" style="margin-bottom:4px">Step 3 of 3 · Migration</div>
-                <h1 class="title" id="mig-title" style="font-size:24px">Migrating your data, automagically…</h1>
-              </div>
-            </div>
-            <p class="lead" id="mig-sub" style="margin:14px 0 0">Keep this tab open — you can start exploring Hostaway while we work. We'll bring everything from your previous PMS across.</p>
-            <div class="bar"><i id="mig-bar"></i></div>
-            <ul class="prog" id="prog"></ul>
-            <div id="mig-success" hidden class="success-cta">
-              <h3>🎉 Your platform is activated.</h3>
-              <p class="muted" style="margin:0 0 4px">Everything from your previous PMS is now in Hostaway. Welcome aboard.</p>
-              <button class="btn" onclick="alert('Demo: this would open your Hostaway dashboard.')">Go to my dashboard →</button>
-            </div>
-            <div class="meta">
-              <span>Import run <span class="mono" id="wrun">—</span></span>
-              <span>Credential <span class="mono" id="cred">—</span></span>
-            </div>
-          </div>
-        </section>
-
-      </div>
     </div>
-  </main>
+  </div>
 </div>
 
 <script>
-/* ---- Deck Auth Component integration (unchanged contract) ---- */
 const AUTH_ORIGIN = "https://auth.components.deck.co";
 const WORKFLOW_ID = "wflo_Mv1Joi10ObkPVMRe";
 const SOURCES = ["src_ARv8oS7CVYhb6bbk","src_Z5d5QDfhVkwON7il","src_2anDOxPk0TEbgfOr","src_zjKQ0xPt1WPceAII",
   "src_Mw8UgS7QziqoCiCt","src_j7hFzFrlUBsBP3Os","src_KFwPlvP7Rm9i41NA","src_WIRl5lyxFNPomsk2","src_A9PCAIWCwAqEGkFG",
   "src_WlyVa46W4JmJ8bUZ","src_U1WC1KcfomN29LDz","src_L0C96f6QjOYiblR6"];
 const params = new URLSearchParams(location.search);
-let started = false;
+const ORDER = ["home","business","link","migrate"];
+let started = false, cur = "home";
 
-function go(n){
-  for (let i=1;i<=4;i++){ document.getElementById("s"+i).hidden = (i!==n); }
-  document.querySelectorAll("#stepbar .s").forEach(el=>{
-    const s=+el.dataset.s; el.classList.toggle("on", s===n); el.classList.toggle("done", s<n);
-  });
-  if (n===3 && !started) ensureToken();
-  window.scrollTo({top:0,behavior:"smooth"});
+// live clock
+(function clk(){ const d=new Date(); document.getElementById("clock").textContent = d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}); setTimeout(clk, 20000); })();
+
+function go(id){
+  document.querySelectorAll(".scr").forEach(s=>s.classList.toggle("on", s.id===id));
+  cur = id;
+  document.getElementById("back").classList.toggle("show", id!=="home" && id!=="migrate");
+  document.getElementById("body").scrollTop = 0;
+  if (id==="link" && !started) ensureToken();
 }
+function back(){ const i=ORDER.indexOf(cur); if(i>0) go(ORDER[Math.max(0,i-1)]); }
 
 async function ensureToken(){
   const t = params.get("token");
   if (t) return startAuth(t);
-  const conn = document.getElementById("connecting");
-  conn.hidden = false;
-  try {
-    const r = await fetch("token.json?cb=" + Date.now(), { cache: "no-store" });
-    if (!r.ok) throw new Error("token.json HTTP " + r.status);
+  const conn = document.getElementById("connecting"); conn.hidden = false;
+  try{
+    const r = await fetch("token.json?cb=" + Date.now(), {cache:"no-store"});
+    if(!r.ok) throw new Error("token.json HTTP " + r.status);
     const j = await r.json();
-    if (!j || !j.token) throw new Error("no token in token.json");
-    conn.hidden = true;
-    startAuth(j.token);
-  } catch (e) {
+    if(!j || !j.token) throw new Error("token not ready");
+    conn.hidden = true; startAuth(j.token);
+  }catch(e){
     conn.hidden = true;
     document.getElementById("token-box").hidden = false;
-    const el = document.getElementById("auth-err");
-    el.innerHTML = "Automatic connection is still warming up. <span class='muted'>(" + (e.message || e) + ")</span> Retry in a moment, or paste a token below.";
+    const el=document.getElementById("auth-err");
+    el.innerHTML = "Connection is warming up. <span class='muted'>(" + (e.message||e) + ")</span> Retry shortly, or paste a token.";
     el.hidden = false;
   }
 }
 
 function startAuth(token){
-  if (!token) return;
+  if(!token) return;
   started = true;
-  document.getElementById("token-box").hidden = true;
-  const f = document.getElementById("deck-frame");
-  f.hidden = false;
-  f.src = AUTH_ORIGIN + "/";
+  document.getElementById("link-intro").hidden = true;
+  const f = document.getElementById("deck-frame"); f.hidden = false; f.src = AUTH_ORIGIN + "/";
   window.addEventListener("message", (e) => {
     if (e.origin !== AUTH_ORIGIN) return;
     const m = e.data || {};
     if (m.type === "READY") {
-      f.contentWindow.postMessage({ type: "INIT", payload: {
-        token, sourceId: SOURCES, sourceConfig: null, credentialId: null,
-        externalId: "hostaway_demo_" + (document.getElementById("company").value || "customer").toLowerCase().replace(/[^a-z0-9]+/g,"_"),
-        taskId: null, taskInput: null, workflowId: WORKFLOW_ID, workflowInput: null, closeAfterStep: null,
-        showStepProgress: true, appearance: { theme: "default", variables: { colorPrimary: "#fd6300", borderRadius: "12px" } },
-        taskRunView: "status", language: "en-US", showCloseButton: false, credentialPersistence: false, mode: "auth" } }, AUTH_ORIGIN);
-    } else if (m.type === "RESIZE" && m.payload && m.payload.height) {
-      f.style.height = Math.max(520, m.payload.height) + "px";
+      f.contentWindow.postMessage({ type:"INIT", payload:{
+        token, sourceId: SOURCES, sourceConfig:null, credentialId:null,
+        externalId: "hostaway_demo_" + (document.getElementById("company").value||"customer").toLowerCase().replace(/[^a-z0-9]+/g,"_"),
+        taskId:null, taskInput:null, workflowId: WORKFLOW_ID, workflowInput:null, closeAfterStep:null,
+        showStepProgress:true, appearance:{ theme:"default", variables:{ colorPrimary:"#fd6300", borderRadius:"12px" } },
+        taskRunView:"status", language:"en-US", showCloseButton:false, credentialPersistence:false, mode:"auth" } }, AUTH_ORIGIN);
     } else if (m.type === "SUCCESS") {
       const p = m.payload || {};
       document.getElementById("wrun").textContent = p.workflowRunId || "—";
@@ -312,46 +307,42 @@ function startAuth(token){
       showMigration();
     } else if (m.type === "ERROR") {
       const p = m.payload || {}; const el = document.getElementById("auth-err");
-      el.textContent = "Connection error: " + (p.code || "") + " " + (p.message || ""); el.hidden = false;
+      document.getElementById("link-intro").hidden = false; f.hidden = true;
+      el.textContent = "Connection error: " + (p.code||"") + " " + (p.message||""); el.hidden = false;
     }
   });
 }
 
 function showMigration(){
-  go(4);
+  go("migrate");
   const items = [
-    ["Company profile &amp; users","Account settings, team and roles",1],
-    ["Listings","14 properties with addresses and pricing",2],
-    ["Owners","Owner contacts, commissions and payouts",4],
-    ["Listing details, photos &amp; channels","Descriptions, amenities, photos, channel links",6],
-    ["Reservations &amp; guests","Past and upcoming bookings with guest profiles",8],
-    ["Rates &amp; availability calendar","Nightly rates, min-stays and blocked dates",10],
+    ["Company profile & users","Account, team and roles",1],
+    ["Listings","14 properties, addresses, pricing",2],
+    ["Owners","Contacts, commissions, payouts",4],
+    ["Details, photos & channels","Descriptions, amenities, links",6],
+    ["Reservations & guests","Past and upcoming bookings",8],
+    ["Rates & availability","Nightly rates, min-stays, blocks",10],
   ];
   const ul = document.getElementById("prog");
-  ul.innerHTML = items.map(([t,s],i)=>`<li id="row${i}"><div class="pi">○</div><div class="pt"><b>${t}</b><span>${s}</span></div><span class="pill" id="p${i}">Queued</span></li>`).join("");
-  const bar = document.getElementById("mig-bar");
-  const last = items[items.length-1][2];
+  ul.innerHTML = items.map(([t,s],i)=>`<li id="r${i}"><div class="pi">○</div><div class="pt"><b>${t}</b><span>${s}</span></div><span class="pill" id="p${i}">Queued</span></li>`).join("");
+  const bar = document.getElementById("mig-bar"); const last = items[items.length-1][2];
   items.forEach(([,,sec],i)=>{
-    setTimeout(()=>{ const r=document.getElementById("row"+i),p=document.getElementById("p"+i);
-      r.className="run"; r.querySelector(".pi").textContent="↻"; p.textContent="Importing"; p.className="pill run";
-      bar.style.width = Math.min(96, (sec/last)*88) + "%"; }, (sec-1)*1500);
-    setTimeout(()=>{ const r=document.getElementById("row"+i),p=document.getElementById("p"+i);
-      r.className="ok"; r.querySelector(".pi").textContent="✓"; p.textContent="Done"; p.className="pill ok"; }, sec*1500+700);
+    setTimeout(()=>{ const r=document.getElementById("r"+i),p=document.getElementById("p"+i); r.className="run"; r.querySelector(".pi").textContent="↻"; p.textContent="Importing"; p.className="pill run"; bar.style.width=Math.min(94,(sec/last)*86)+"%"; }, (sec-1)*1400);
+    setTimeout(()=>{ const r=document.getElementById("r"+i),p=document.getElementById("p"+i); r.className="ok"; r.querySelector(".pi").textContent="✓"; p.textContent="Done"; p.className="pill ok"; }, sec*1400+700);
   });
-  setTimeout(finishMigration, last*1500+1500);
+  setTimeout(finish, last*1400+1500);
 }
-
-function finishMigration(){
+function finish(){
   document.getElementById("mig-bar").style.width="100%";
-  document.getElementById("mig-head").classList.add("done");
-  document.getElementById("mig-spin").innerHTML='<svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  document.getElementById("mig-top").classList.add("done");
+  document.getElementById("mig-ring").innerHTML='<svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   document.getElementById("mig-title").textContent="Migration complete";
-  document.getElementById("mig-sub").textContent="Everything from your previous PMS is now in Hostaway.";
-  document.querySelector("#stepbar .s[data-s='4']").classList.add("done");
-  document.getElementById("mig-success").hidden=false;
+  document.getElementById("mig-sub").textContent="Everything is now in Hostaway.";
+  document.getElementById("done-block").hidden=false;
+  document.getElementById("done-foot").hidden=false;
 }
 
-if (params.get("step")) go(+params.get("step"));
+if (params.get("screen")) go(params.get("screen"));
 </script>
 </body>
 </html>
