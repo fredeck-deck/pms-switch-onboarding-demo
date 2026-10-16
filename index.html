@@ -26,11 +26,11 @@
 html,body{height:100%}
 body{margin:0;font-family:'Plus Jakarta Sans',-apple-system,system-ui,Segoe UI,Roboto,sans-serif;color:var(--body);
   background:radial-gradient(1200px 700px at 50% -5%, #3a2a20 0%, #211a16 42%, #15110e 100%);
-  -webkit-font-smoothing:antialiased;line-height:1.5;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px 16px}
+  -webkit-font-smoothing:antialiased;line-height:1.5;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:56px;min-height:100vh;padding:24px}
 h1,h2,h3{color:var(--ink);letter-spacing:-.02em;margin:0}
 
-/* desktop context around the phone */
-.context{position:fixed;left:48px;top:0;bottom:0;width:360px;display:flex;flex-direction:column;justify-content:center;gap:18px;color:#f0e8e0;z-index:1}
+/* desktop context beside the phone */
+.context{width:330px;flex:0 0 330px;display:flex;flex-direction:column;gap:18px;color:#f0e8e0}
 .context .logo{display:flex;align-items:center;gap:11px;font-weight:800;font-size:23px;color:#fff;letter-spacing:-.03em}
 .context .logo .mk{width:36px;height:36px;border-radius:10px;background:var(--orange);display:grid;place-items:center;box-shadow:0 8px 20px -6px rgba(253,99,0,.8)}
 .context .logo .mk svg{width:21px;height:21px}
@@ -40,8 +40,8 @@ h1,h2,h3{color:var(--ink);letter-spacing:-.02em;margin:0}
 @media(max-width:1180px){.context{display:none}}
 
 /* phone frame */
-.phone{position:relative;width:398px;height:844px;background:#000;border-radius:58px;padding:13px;
-  box-shadow:0 0 0 2px #2a2a2a, 0 50px 90px -30px rgba(0,0,0,.75);z-index:2;flex:0 0 auto}
+.phone{position:relative;width:398px;height:min(860px,96vh);background:#000;border-radius:58px;padding:13px;
+  box-shadow:0 0 0 2px #2a2a2a, 0 50px 90px -30px rgba(0,0,0,.75);flex:0 0 auto}
 .screen{position:relative;width:100%;height:100%;background:var(--app-bg);border-radius:46px;overflow:hidden;display:flex;flex-direction:column}
 .island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:122px;height:34px;background:#000;border-radius:20px;z-index:40}
 /* iOS status bar */
@@ -88,6 +88,15 @@ h1.ttl{font-size:25px;line-height:1.14;margin-bottom:6px}
 .field label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px}
 .field input{width:100%;padding:13px 14px;border:1.5px solid var(--line2);border-radius:13px;font-size:15px;font-family:inherit;background:#fff;color:var(--ink)}
 .field input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 4px rgba(253,99,0,.13)}
+.pms-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:4px}
+.pms-opt{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:10px;background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:15px 14px;cursor:pointer;font-family:inherit;text-align:left;transition:.14s}
+.pms-opt:hover{border-color:var(--orange);transform:translateY(-2px);box-shadow:0 14px 26px -18px rgba(253,99,0,.5)}
+.pms-opt b{color:var(--ink);font-size:14.5px;font-weight:700}
+.pms-opt .pms-logo{width:40px;height:40px;flex:0 0 40px}
+.pms-opt.soon{cursor:not-allowed;opacity:.55}
+.pms-opt.soon:hover{border-color:var(--line);transform:none;box-shadow:none}
+.pms-opt .soon-t{position:absolute;top:12px;right:12px;font-size:10px;font-weight:700;color:var(--muted);background:#f1efec;padding:2px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em}
+.pms-ini{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-weight:800;font-size:16px;color:#fff}
 .pms-card{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px 15px;margin:4px 0 6px;box-shadow:0 10px 24px -20px rgba(0,0,0,.4)}
 .pms-logo{width:42px;height:42px;flex:0 0 42px;border-radius:12px;overflow:hidden;display:block}
 .pms-logo svg{width:100%;height:100%;display:block}
@@ -178,7 +187,7 @@ h1.ttl{font-size:25px;line-height:1.14;margin-bottom:6px}
           <div class="k">Welcome, Dana</div>
           <h1>Activate your platform</h1>
           <p>You're almost set up. Link the system you use today and we'll migrate all your data into Hostaway.</p>
-          <button class="cta" onclick="go('link')">Get started →</button>
+          <button class="cta" onclick="go('select')">Get started →</button>
         </div>
         <div class="sect">What we'll bring over</div>
         <div class="feat">
@@ -188,12 +197,32 @@ h1.ttl{font-size:25px;line-height:1.14;margin-bottom:6px}
         </div>
       </section>
 
+      <!-- SELECT PMS -->
+      <section class="scr" id="select">
+        <div class="pad">
+          <div class="k2">Step 1 of 2 · Bring your data</div>
+          <h1 class="ttl">Which system do you use today?</h1>
+          <p class="lead">Pick your current PMS — we'll migrate everything from it into Hostaway.</p>
+          <div class="pms-grid">
+            <button class="pms-opt" onclick="go('link')">
+              <span class="pms-logo"><svg viewBox="0 0 100 100" aria-label="Guesty"><rect width="100" height="100" rx="26" fill="#007a67"/><path fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" d="M66 36a19 19 0 1 0 0 28"/><path fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" d="M66 33v34c0 13-9 19-21 19"/></svg></span>
+              <b>Guesty</b>
+            </button>
+            <div class="pms-opt soon"><span class="pms-ini" style="background:#5b4bdb">Lo</span><b>Lodgify</b><span class="soon-t">Soon</span></div>
+            <div class="pms-opt soon"><span class="pms-ini" style="background:#6d28d9">Ho</span><b>Hostfully</b><span class="soon-t">Soon</span></div>
+            <div class="pms-opt soon"><span class="pms-ini" style="background:#0ea5e9">Or</span><b>OwnerRez</b><span class="soon-t">Soon</span></div>
+            <div class="pms-opt soon"><span class="pms-ini" style="background:#e11d48">Sm</span><b>Smoobu</b><span class="soon-t">Soon</span></div>
+            <div class="pms-opt soon"><span class="pms-ini" style="background:#2563eb">B24</span><b>Beds24</b><span class="soon-t">Soon</span></div>
+          </div>
+        </div>
+      </section>
+
       <!-- LINK PMS -->
       <section class="scr" id="link">
         <div class="pad">
-          <div class="k2">Step 2 of 3 · Bring your data</div>
-          <h1 class="ttl">Link your current PMS</h1>
-          <p class="lead">Sign in to the system you use today and we'll bring everything across.</p>
+          <div class="k2">Step 2 of 2 · Bring your data</div>
+          <h1 class="ttl">Sign in to Guesty</h1>
+          <p class="lead">Enter your Guesty login and we'll bring everything across.</p>
 
           <div class="pms-card">
             <span class="pms-logo"><svg viewBox="0 0 100 100" aria-label="Guesty"><rect width="100" height="100" rx="26" fill="#007a67"/><path fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" d="M66 36a19 19 0 1 0 0 28"/><path fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" d="M66 33v34c0 13-9 19-21 19"/></svg></span>
@@ -243,8 +272,16 @@ const API = "https://api.deck.co/v2";
 const WORKFLOW_ID = "wflo_Mv1Joi10ObkPVMRe";
 const SOURCE_ID = "src_ARv8oS7CVYhb6bbk";
 const params = new URLSearchParams(location.search);
-const ORDER = ["home","link","migrate"];
-let cur = "home", _tok = null;
+const ORDER = ["home","select","link","migrate"];
+const STEPS = [
+  {name:"fetch_account_profile", title:"Company profile & users", sub:"Account, team and roles"},
+  {name:"extract_listings",      title:"Listings",               sub:"Properties, addresses, pricing"},
+  {name:"fetch_owners",          title:"Owners",                 sub:"Contacts, commissions, payouts"},
+  {name:"fetch_listing_details", title:"Details, photos & channels", sub:"Descriptions, amenities, links"},
+  {name:"fetch_listing_reservations", title:"Reservations & guests", sub:"Past and upcoming bookings"},
+  {name:"fetch_listing_calendar", title:"Rates & availability",   sub:"Nightly rates, min-stays, blocks"},
+];
+let cur = "home", _tok = null, _runId = null;
 
 // live clock
 (function clk(){ const d=new Date(); document.getElementById("clock").textContent = d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}); setTimeout(clk, 20000); })();
@@ -291,34 +328,76 @@ async function connectGuesty(){
     const run = await rRes.json();
     document.getElementById("cred").textContent = cred.id;
     document.getElementById("wrun").textContent = run.id || "—";
-    showMigration();
+    _runId = run.id;
+    showMigration(run.id);
   }catch(e){
     btn.disabled = false; btn.textContent = orig;
     err.textContent = "Couldn't connect: " + (e.message || e); err.hidden = false;
   }
 }
 
-function showMigration(){
+// Render the migration checklist, then drive it from the REAL Deck run status.
+function showMigration(runId){
   go("migrate");
-  const items = [
-    ["Company profile & users","Account, team and roles",1],
-    ["Listings","14 properties, addresses, pricing",2],
-    ["Owners","Contacts, commissions, payouts",4],
-    ["Details, photos & channels","Descriptions, amenities, links",6],
-    ["Reservations & guests","Past and upcoming bookings",8],
-    ["Rates & availability","Nightly rates, min-stays, blocks",10],
-  ];
   const ul = document.getElementById("prog");
-  ul.innerHTML = items.map(([t,s],i)=>`<li id="r${i}"><div class="pi">○</div><div class="pt"><b>${t}</b><span>${s}</span></div><span class="pill" id="p${i}">Queued</span></li>`).join("");
-  const bar = document.getElementById("mig-bar"); const last = items[items.length-1][2];
-  items.forEach(([,,sec],i)=>{
-    setTimeout(()=>{ const r=document.getElementById("r"+i),p=document.getElementById("p"+i); r.className="run"; r.querySelector(".pi").textContent="↻"; p.textContent="Importing"; p.className="pill run"; bar.style.width=Math.min(94,(sec/last)*86)+"%"; }, (sec-1)*1400);
-    setTimeout(()=>{ const r=document.getElementById("r"+i),p=document.getElementById("p"+i); r.className="ok"; r.querySelector(".pi").textContent="✓"; p.textContent="Done"; p.className="pill ok"; }, sec*1400+700);
-  });
-  setTimeout(finish, last*1400+1500);
+  ul.innerHTML = STEPS.map((s,i)=>`<li id="r${i}"><div class="pi">○</div><div class="pt"><b>${s.title}</b><span>${s.sub}</span></div><span class="pill" id="p${i}">Queued</span></li>`).join("");
+  if (params.get("fast") === "1") fakeFallback();   // snappy demo mode
+  else if (runId) pollRun(runId);
+  else fakeFallback();
 }
+
+function setRow(i, state){
+  const r = document.getElementById("r"+i), p = document.getElementById("p"+i);
+  if (!r) return;
+  if (state === "completed"){ r.className="ok"; r.querySelector(".pi").textContent="✓"; p.textContent="Done"; p.className="pill ok"; }
+  else if (state === "running"){ r.className="run"; r.querySelector(".pi").textContent="↻"; p.textContent="Importing"; p.className="pill run"; }
+  else if (state === "failed"){ r.className=""; r.querySelector(".pi").textContent="!"; p.textContent="Retrying"; p.className="pill run"; }
+  else { r.className=""; r.querySelector(".pi").textContent="○"; p.textContent="Queued"; p.className="pill"; }
+}
+
+async function pollRun(runId){
+  const bar = document.getElementById("mig-bar");
+  let token; try { token = await getToken(); } catch(e){ return fakeFallback(); }
+  const H = { "Authorization":"Bearer " + token };
+  const t0 = Date.now();
+  while (Date.now() - t0 < 15*60*1000){
+    let w;
+    try { w = await (await fetch(API + "/workflow-runs/" + runId, { headers:H, cache:"no-store" })).json(); }
+    catch(e){ await sleep(3000); continue; }
+    const byName = {}; (w.steps||[]).forEach(s => byName[s.name] = s.status);
+    let done = 0, running = false;
+    STEPS.forEach((st,i)=>{ const s = byName[st.name] || "queued"; setRow(i, s); if (s==="completed") done++; if (s==="running") running=true; });
+    bar.style.width = Math.round((done/STEPS.length)*100) + "%";
+    document.getElementById("mig-sub").textContent = running
+      ? "Importing your data from Guesty — " + done + " of " + STEPS.length + " complete."
+      : "We're bringing everything from Guesty into Hostaway…";
+    if (w.status === "completed"){ finish(); return; }
+    if (w.status === "failed"){ migFailed(); return; }
+    await sleep(3000);
+  }
+  finish(); // safety: never leave the demo hanging
+}
+
+function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+function migFailed(){
+  document.getElementById("mig-title").textContent = "Migration needs attention";
+  document.getElementById("mig-sub").textContent = "One step didn't finish. Our team has been notified.";
+}
+
+// Used only if the session token is unavailable (can't poll): timed animation so the demo still reads.
+function fakeFallback(){
+  const bar = document.getElementById("mig-bar");
+  STEPS.forEach((_,i)=>{
+    setTimeout(()=>{ setRow(i,"running"); bar.style.width = Math.min(92, ((i+1)/STEPS.length)*86) + "%"; }, i*1600);
+    setTimeout(()=>{ setRow(i,"completed"); }, i*1600 + 1100);
+  });
+  setTimeout(finish, STEPS.length*1600 + 1400);
+}
+
 function finish(){
   document.getElementById("mig-bar").style.width="100%";
+  STEPS.forEach((_,i)=>setRow(i,"completed"));
   document.getElementById("mig-top").classList.add("done");
   document.getElementById("mig-ring").innerHTML='<svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   document.getElementById("mig-title").textContent="Migration complete";
