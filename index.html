@@ -89,6 +89,7 @@ input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 4px rgba(25
 
 /* connect */
 .secure{display:flex;gap:12px;align-items:center;background:var(--ok-soft);border:1px solid #c7f0db;color:#067647;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:500;margin:0 0 18px}
+.cspin{width:22px;height:22px;flex:0 0 22px;border-radius:50%;border:3px solid var(--peach);border-top-color:var(--orange);animation:spin .9s linear infinite}
 #deck-frame{width:100%;min-height:560px;border:1px solid var(--line);border-radius:14px;background:#fff}
 .token-box{background:var(--cream);border:1px dashed var(--line-strong);border-radius:14px;padding:18px}
 .err{background:#fef3f0;color:#b42318;border:1px solid #f6cfc5;padding:13px 15px;border-radius:12px;margin-top:16px;font-size:14px}
@@ -201,13 +202,16 @@ input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 4px rgba(25
             <p class="lead">Sign in to the system you use today. We'll pull everything across so you start fully set up.</p>
             <div class="secure">🔒 Your credentials go straight to our secure import partner and never pass through Hostaway.</div>
 
-            <div id="token-box" class="token-box" hidden>
-              <label style="margin-top:0">Demo session token (tk_…)</label>
-              <input id="token-in" placeholder="tk_...">
-              <button class="btn" onclick="startAuth(document.getElementById('token-in').value.trim())">Start secure connection</button>
-              <p class="muted" style="margin:14px 0 0;font-size:12.5px">This mock-up is a static page, so it can't mint a token itself. In production Hostaway's backend calls <span class="mono">POST https://api.deck.co/v2/token</span>. Open this page with <span class="mono">?token=tk_…</span> to run it live.</p>
+            <div id="connecting" hidden style="display:flex;align-items:center;gap:14px;padding:26px 4px;color:var(--muted)">
+              <span class="cspin"></span><span>Preparing your secure connection…</span>
             </div>
             <iframe id="deck-frame" hidden title="Connect your PMS" allow="clipboard-write"></iframe>
+            <div id="token-box" class="token-box" hidden>
+              <label style="margin-top:0">Session token</label>
+              <input id="token-in" placeholder="tk_...">
+              <button class="btn" onclick="startAuth(document.getElementById('token-in').value.trim())">Start secure connection</button>
+              <p class="muted" style="margin:14px 0 0;font-size:12.5px">Fallback entry. Normally the token is minted automatically the moment you reach this step (Hostaway's backend calls <span class="mono">POST https://api.deck.co/v2/token</span>). You can also open this page with <span class="mono">?token=tk_…</span>.</p>
+            </div>
             <div id="auth-err" class="err" hidden></div>
           </div>
         </section>
@@ -257,11 +261,29 @@ function go(n){
   document.querySelectorAll("#stepbar .s").forEach(el=>{
     const s=+el.dataset.s; el.classList.toggle("on", s===n); el.classList.toggle("done", s<n);
   });
-  if (n===3 && !started){
-    const t = params.get("token");
-    if (t) startAuth(t); else document.getElementById("token-box").hidden = false;
-  }
+  if (n===3 && !started) ensureToken();
   window.scrollTo({top:0,behavior:"smooth"});
+}
+
+async function ensureToken(){
+  const t = params.get("token");
+  if (t) return startAuth(t);
+  const conn = document.getElementById("connecting");
+  conn.hidden = false;
+  try {
+    const r = await fetch("token.json?cb=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error("token.json HTTP " + r.status);
+    const j = await r.json();
+    if (!j || !j.token) throw new Error("no token in token.json");
+    conn.hidden = true;
+    startAuth(j.token);
+  } catch (e) {
+    conn.hidden = true;
+    document.getElementById("token-box").hidden = false;
+    const el = document.getElementById("auth-err");
+    el.innerHTML = "Automatic connection is still warming up. <span class='muted'>(" + (e.message || e) + ")</span> Retry in a moment, or paste a token below.";
+    el.hidden = false;
+  }
 }
 
 function startAuth(token){
