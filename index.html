@@ -270,19 +270,20 @@ async function ensureToken(){
   const t = params.get("token");
   if (t) return startAuth(t);
   const conn = document.getElementById("connecting"); conn.hidden = false;
-  try{
-    const r = await fetch("token.json?cb=" + Date.now(), {cache:"no-store"});
-    if(!r.ok) throw new Error("token.json HTTP " + r.status);
-    const j = await r.json();
-    if(!j || !j.token) throw new Error("token not ready");
-    conn.hidden = true; startAuth(j.token);
-  }catch(e){
-    conn.hidden = true;
-    document.getElementById("token-box").hidden = false;
-    const el=document.getElementById("auth-err");
-    el.innerHTML = "Connection is warming up. <span class='muted'>(" + (e.message||e) + ")</span> Retry shortly, or paste a token.";
-    el.hidden = false;
+  const label = conn.querySelector("span:last-child");
+  const debug = params.get("debug") === "1";
+  for (let i = 0; i < 20; i++){
+    try{
+      const r = await fetch("token.json?cb=" + Date.now(), {cache:"no-store"});
+      if (r.ok){ const j = await r.json(); if (j && j.token){ conn.hidden = true; return startAuth(j.token); } }
+    }catch(e){}
+    if (i === 3) label.textContent = "Securing your connection…";
+    if (i === 9) label.textContent = "Almost ready…";
+    await new Promise(res => setTimeout(res, 2500));
   }
+  // Only reached if a token never becomes available. Keep it calm for a demo.
+  label.textContent = "Connection is taking longer than usual.";
+  if (debug) document.getElementById("token-box").hidden = false;
 }
 
 function startAuth(token){
