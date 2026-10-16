@@ -122,6 +122,17 @@ h1.ttl{font-size:25px;line-height:1.14;margin-bottom:6px}
 .mig-top .ring{width:44px;height:44px;flex:0 0 44px;border-radius:50%;border:4px solid var(--peach);border-top-color:var(--orange);animation:spin .9s linear infinite}
 .mig-top.done .ring{border:0;background:var(--ok);display:grid;place-items:center;animation:pop .4s cubic-bezier(.2,1.4,.4,1)}
 .mig-top.done .ring svg{width:24px;height:24px}
+.connected-hero{text-align:center;padding:14px 6px 4px}
+.big-check{width:72px;height:72px;margin:0 auto;border-radius:50%;background:var(--ok-soft);display:grid;place-items:center;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+.big-check svg{width:40px;height:40px}
+.big-check.working{background:var(--peach);border:4px solid var(--peach);border-top-color:var(--orange);animation:spin .9s linear infinite}
+.big-check.working svg{display:none}
+.mini-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:18px;box-shadow:0 10px 24px -20px rgba(0,0,0,.4)}
+.mini-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.mini-head b{display:block;color:var(--ink);font-size:14px;font-weight:700}
+.mini-head span{font-size:12px;color:var(--muted)}
+.mini-count{flex:0 0 auto;font-size:13px;font-weight:800;color:var(--orange-ink);background:var(--peach-soft);border-radius:999px;padding:3px 11px;white-space:nowrap}
+.mini-toggle{background:none;border:0;color:var(--orange);font-weight:700;font-size:12.5px;font-family:inherit;cursor:pointer;padding:12px 0 2px;margin:0}
 @keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
 .bar{height:8px;border-radius:999px;background:var(--peach);overflow:hidden;margin:16px 0 20px}
 .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#fd6300,#ff9d28);border-radius:999px;transition:width .6s cubic-bezier(.3,.7,.3,1)}
@@ -264,21 +275,22 @@ h1.ttl{font-size:25px;line-height:1.14;margin-bottom:6px}
       <!-- MIGRATE -->
       <section class="scr" id="migrate">
         <div class="pad">
-          <div class="mig-top" id="mig-top">
-            <div class="ring" id="mig-ring"></div>
-            <div><div class="k2" style="margin-bottom:3px">Step 3 of 3</div><h1 class="ttl" id="mig-title" style="font-size:21px">Migrating, automagically…</h1></div>
+          <div class="connected-hero">
+            <div class="big-check" id="mig-ring"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="#12b76a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <h1 class="ttl" id="mig-title" style="font-size:23px;margin-top:16px">Thanks for connecting Guesty</h1>
+            <p class="lead" id="mig-sub" style="margin-top:10px">We're setting up your Hostaway account now. This usually finishes within the next <b>90 minutes</b> — we'll send you a notification the moment it's ready.</p>
           </div>
-          <p class="lead" id="mig-sub" style="margin:10px 0 0">We're bringing everything from your previous PMS into Hostaway. This usually takes a moment.</p>
-          <div class="bar"><i id="mig-bar"></i></div>
-          <ul class="prog" id="prog"></ul>
 
-          <div id="done-block" hidden>
-            <div class="done-hero">
-              <div class="big"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="#12b76a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-              <h1>You're all set 🎉</h1>
-              <p>Everything from your previous PMS is now in Hostaway. Welcome aboard.</p>
+          <div class="mini-card">
+            <div class="mini-head">
+              <div><b>Setting up your account</b><span id="mini-stat">Importing your data from Guesty…</span></div>
+              <span class="mini-count" id="mini-count">0 / 6</span>
             </div>
+            <div class="bar" style="margin:12px 0 0"><i id="mig-bar"></i></div>
+            <button class="mini-toggle" id="mini-toggle" onclick="toggleSteps()">View details</button>
+            <ul class="prog" id="prog" hidden style="margin-top:4px"></ul>
           </div>
+
           <div class="meta"><span>Import run <span class="mono" id="wrun">—</span></span><span>Credential <span class="mono" id="cred">—</span></span></div>
         </div>
         <div style="flex:1"></div>
@@ -417,9 +429,10 @@ async function pollRun(runId){
     let done = 0, running = false;
     STEPS.forEach((st,i)=>{ const s = byName[st.name] || "queued"; setRow(i, s); if (s==="completed") done++; if (s==="running") running=true; });
     bar.style.width = Math.round((done/STEPS.length)*100) + "%";
-    document.getElementById("mig-sub").textContent = running
-      ? "Importing your data from Guesty — " + done + " of " + STEPS.length + " complete."
-      : "We're bringing everything from Guesty into Hostaway…";
+    document.getElementById("mini-count").textContent = done + " / " + STEPS.length;
+    document.getElementById("mini-stat").textContent = running
+      ? "Importing — " + done + " of " + STEPS.length + " complete"
+      : (done > 0 ? done + " of " + STEPS.length + " complete" : "Starting the import…");
     if (w.status === "completed"){ finish(); return; }
     if (w.status === "failed"){ migFailed(); return; }
     await sleep(3000);
@@ -430,8 +443,13 @@ async function pollRun(runId){
 function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
 
 function migFailed(){
-  document.getElementById("mig-title").textContent = "Migration needs attention";
-  document.getElementById("mig-sub").textContent = "One step didn't finish. Our team has been notified.";
+  document.getElementById("mini-stat").textContent = "Needs attention";
+  document.getElementById("mig-sub").textContent = "One step didn't finish — our team has been notified and will complete your setup.";
+}
+
+function toggleSteps(){
+  const ul = document.getElementById("prog"), btn = document.getElementById("mini-toggle");
+  const show = ul.hidden; ul.hidden = !show; btn.textContent = show ? "Hide details" : "View details";
 }
 
 // Used only if the session token is unavailable (can't poll): timed animation so the demo still reads.
@@ -447,11 +465,10 @@ function fakeFallback(){
 function finish(){
   document.getElementById("mig-bar").style.width="100%";
   STEPS.forEach((_,i)=>setRow(i,"completed"));
-  document.getElementById("mig-top").classList.add("done");
-  document.getElementById("mig-ring").innerHTML='<svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  document.getElementById("mig-title").textContent="Migration complete";
-  document.getElementById("mig-sub").textContent="Everything is now in Hostaway.";
-  document.getElementById("done-block").hidden=false;
+  document.getElementById("mini-count").textContent = STEPS.length + " / " + STEPS.length;
+  document.getElementById("mini-stat").textContent = "Setup complete";
+  document.getElementById("mig-title").textContent = "Your Hostaway account is ready 🎉";
+  document.getElementById("mig-sub").innerHTML = "Everything from Guesty is now in Hostaway. Welcome aboard — we've sent you a confirmation.";
   document.getElementById("done-foot").hidden=false;
 }
 
