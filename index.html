@@ -230,13 +230,35 @@ h1.ttl{font-size:25px;line-height:1.14;margin-bottom:6px}
             <span class="pms-ok">✓</span>
           </div>
 
-          <div class="field"><label>Email</label><input id="g-email" type="email" autocomplete="username" value="dana@seasidestays.example"></div>
-          <div class="field"><label>Password</label><input id="g-pass" type="password" autocomplete="current-password" value="guesty-demo"></div>
+          <div class="field"><label>Email</label><input id="g-email" type="email" autocomplete="username" placeholder="you@company.com"></div>
+          <div class="field"><label>Password</label><input id="g-pass" type="password" autocomplete="current-password" placeholder="Your Guesty password"></div>
           <div class="secure"><span>🔒</span><span>Your credentials go straight to our secure import partner and are never stored by Hostaway.</span></div>
           <div id="auth-err" class="err" hidden></div>
         </div>
         <div style="flex:1"></div>
         <div class="foot"><button class="pbtn" id="connect-btn" onclick="connectGuesty()">Connect Guesty &amp; migrate</button></div>
+      </section>
+
+      <!-- MFA INTERACTION -->
+      <section class="scr" id="mfa">
+        <div class="pad">
+          <div class="pms-card" style="margin-bottom:18px">
+            <span class="pms-logo"><svg viewBox="0 0 100 100" aria-label="Guesty"><rect width="100" height="100" rx="26" fill="#007a67"/><path fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" d="M66 36a19 19 0 1 0 0 28"/><path fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" d="M66 33v34c0 13-9 19-21 19"/></svg></span>
+            <div class="pms-meta"><b>Guesty</b><span>Two-factor authentication</span></div>
+            <span class="pms-ok" style="background:var(--peach-soft);color:var(--orange)">🔒</span>
+          </div>
+          <div class="k2">Verification required</div>
+          <h1 class="ttl">Enter your verification code</h1>
+          <p class="lead" id="mfa-msg">Guesty sent a 6-digit code to your phone. Enter it to finish connecting your account.</p>
+          <div class="field">
+            <label>Verification code</label>
+            <input id="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="● ● ● ● ● ●" style="letter-spacing:.35em;font-size:21px;text-align:center;font-weight:700">
+          </div>
+          <div id="mfa-err" class="err" hidden></div>
+          <p class="muted" style="font-size:12.5px;margin-top:16px">Didn't get a code? <a href="#" onclick="return false" style="font-weight:600">Resend</a> · Deck relays this challenge from Guesty and never sees your code.</p>
+        </div>
+        <div style="flex:1"></div>
+        <div class="foot"><button class="pbtn" id="mfa-btn" onclick="submitMfa()">Verify &amp; continue</button></div>
       </section>
 
       <!-- MIGRATE -->
@@ -272,7 +294,7 @@ const API = "https://api.deck.co/v2";
 const WORKFLOW_ID = "wflo_Mv1Joi10ObkPVMRe";
 const SOURCE_ID = "src_ARv8oS7CVYhb6bbk";
 const params = new URLSearchParams(location.search);
-const ORDER = ["home","select","link","migrate"];
+const ORDER = ["home","select","link","mfa","migrate"];
 const STEPS = [
   {name:"fetch_account_profile", title:"Company profile & users", sub:"Account, team and roles"},
   {name:"extract_listings",      title:"Listings",               sub:"Properties, addresses, pricing"},
@@ -281,7 +303,7 @@ const STEPS = [
   {name:"fetch_listing_reservations", title:"Reservations & guests", sub:"Past and upcoming bookings"},
   {name:"fetch_listing_calendar", title:"Rates & availability",   sub:"Nightly rates, min-stays, blocks"},
 ];
-let cur = "home", _tok = null, _runId = null;
+let cur = "home", _tok = null, _runId = null, _credId = null;
 
 // live clock
 (function clk(){ const d=new Date(); document.getElementById("clock").textContent = d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}); setTimeout(clk, 20000); })();
@@ -289,7 +311,7 @@ let cur = "home", _tok = null, _runId = null;
 function go(id){
   document.querySelectorAll(".scr").forEach(s=>s.classList.toggle("on", s.id===id));
   cur = id;
-  document.getElementById("back").classList.toggle("show", id!=="home" && id!=="migrate");
+  document.getElementById("back").classList.toggle("show", id!=="home" && id!=="migrate" && id!=="mfa");
   document.getElementById("body").scrollTop = 0;
   if (id==="link") getToken().catch(()=>{});   // pre-warm the session token
 }
@@ -315,24 +337,51 @@ async function connectGuesty(){
   try{
     const token = await getToken();
     const H = { "Authorization":"Bearer " + token, "Content-Type":"application/json" };
-    // 1) create the credential (headless — our own UI, no Deck-branded picker)
+    // Create the credential (headless — our own UI, no Deck-branded picker).
     const cRes = await fetch(API + "/credentials", { method:"POST", headers:H, body: JSON.stringify({
       source_id: SOURCE_ID, auth_method:"username_password",
       auth_credentials:{ username: email, password: pass },
       external_id: "hostaway_demo_" + Date.now() }) });
     const cred = await cRes.json();
     if (!cred.id) throw new Error((cred.errors && cred.errors[0] && cred.errors[0].message) || "could not sign in");
-    // 2) kick off the real migration workflow
-    const rRes = await fetch(API + "/workflows/" + WORKFLOW_ID + "/run", { method:"POST", headers:H,
-      body: JSON.stringify({ credential_id: cred.id }) });
-    const run = await rRes.json();
+    _credId = cred.id;
     document.getElementById("cred").textContent = cred.id;
-    document.getElementById("wrun").textContent = run.id || "—";
-    _runId = run.id;
-    showMigration(run.id);
+    // Guesty requires 2FA — surface the interaction before the run starts.
+    // (Mirrors Deck's task_run.interaction_required {type:"mfa", message,
+    // fields:[{name:"code"}]}. A live headless submit needs the trun id from the
+    // interaction webhook / a server-side receiver; here it's demo-driven.)
+    btn.disabled = false; btn.textContent = orig;
+    document.getElementById("mfa-code").value = "";
+    document.getElementById("mfa-err").hidden = true;
+    go("mfa");
+    setTimeout(()=>{ const el=document.getElementById("mfa-code"); if(el) el.focus(); }, 350);
   }catch(e){
     btn.disabled = false; btn.textContent = orig;
     err.textContent = "Couldn't connect: " + (e.message || e); err.hidden = false;
+  }
+}
+
+async function submitMfa(){
+  const code = (document.getElementById("mfa-code").value || "").trim();
+  const err = document.getElementById("mfa-err");
+  if (!/^\d{6}$/.test(code)){ err.textContent = "Enter the 6-digit code from Guesty."; err.hidden = false; return; }
+  err.hidden = true;
+  const btn = document.getElementById("mfa-btn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="cspin" style="border-color:rgba(255,255,255,.45);border-top-color:#fff;vertical-align:-4px"></span> Verifying…';
+  try{
+    // Code accepted — now start the real migration workflow.
+    const token = await getToken();
+    const H = { "Authorization":"Bearer " + token, "Content-Type":"application/json" };
+    const rRes = await fetch(API + "/workflows/" + WORKFLOW_ID + "/run", { method:"POST", headers:H,
+      body: JSON.stringify({ credential_id: _credId }) });
+    const run = await rRes.json();
+    _runId = run.id;
+    document.getElementById("wrun").textContent = run.id || "—";
+    showMigration(run.id);
+  }catch(e){
+    btn.disabled = false; btn.textContent = "Verify & continue";
+    err.textContent = "Couldn't verify: " + (e.message || e); err.hidden = false;
   }
 }
 
