@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Switch to Hostaway - onboarding (demo mock-up)</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1b2430;--muted:#667085;--brand:#ff6a3d;--brand-ink:#fff;--line:#e4e7ec;--ok:#12b76a}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:#fff;border-bottom:1px solid var(--line)}
+.word{font-weight:800;font-size:20px;letter-spacing:-.3px}.word b{color:var(--brand)}
+.badge{font-size:12px;background:#fff4ed;color:#b93815;border:1px solid #fed7c3;padding:3px 8px;border-radius:999px}
+.wrap{max-width:1040px;margin:28px auto;padding:0 16px;display:grid;grid-template-columns:260px 1fr;gap:24px}
+.steps{list-style:none;padding:0;margin:0}.steps li{display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:10px;color:var(--muted)}
+.steps li .n{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:13px;font-weight:700}
+.steps li.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.05)}.steps li.on .n{border-color:var(--brand);color:var(--brand)}
+.steps li.done .n{background:var(--ok);border-color:var(--ok);color:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px}
+h1{font-size:24px;margin:0 0 6px}p.lead{color:var(--muted);margin:0 0 22px}
+label{display:block;font-size:14px;color:var(--muted);margin:14px 0 6px}input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;font-size:15px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+button{background:var(--brand);color:var(--brand-ink);border:0;border-radius:8px;padding:12px 20px;font-size:15px;font-weight:600;cursor:pointer;margin-top:22px}
+button.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}.choice{border:1px solid var(--line);border-radius:12px;padding:16px;cursor:pointer}
+.choice:hover{border-color:var(--brand)}.choice b{display:block;margin-bottom:4px}.choice span{color:var(--muted);font-size:14px}
+#deck-frame{width:100%;min-height:600px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.hidden{display:none}.muted{color:var(--muted);font-size:13px}.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.prog li{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}.prog{list-style:none;padding:0}
+.pill{font-size:12px;padding:3px 9px;border-radius:999px;background:#f2f4f7;color:var(--muted)}.pill.run{background:#fff4ed;color:#b93815}.pill.ok{background:#ecfdf3;color:#027a48}
+.err{background:#fef3f2;color:#b42318;border:1px solid #fecdca;padding:12px;border-radius:8px;margin-top:14px}
+@media(max-width:800px){.wrap{grid-template-columns:1fr}.row,.choices{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="word">Host<b>away</b></div><span class="badge">Demo mock-up - not the real Hostaway app</span></header>
+<div class="wrap">
+  <ol class="steps" id="steps">
+    <li data-s="1" class="on"><span class="n">1</span>Your company</li>
+    <li data-s="2"><span class="n">2</span>Bring your data</li>
+    <li data-s="3"><span class="n">3</span>Connect current PMS</li>
+    <li data-s="4"><span class="n">4</span>Import</li>
+  </ol>
+  <main>
+    <section class="card" id="s1">
+      <h1>Welcome to Hostaway</h1><p class="lead">Tell us about your vacation rental business.</p>
+      <div class="row"><div><label>Company name</label><input id="company" value="Seaside Stays Co."></div><div><label>Work email</label><input value="dana@seasidestays.example"></div></div>
+      <div class="row"><div><label>Number of listings</label><input value="14"></div><div><label>Country</label><input value="United States"></div></div>
+      <button onclick="go(2)">Continue</button>
+    </section>
+    <section class="card hidden" id="s2">
+      <h1>Bring your data with you</h1><p class="lead">Switching from another property management system? We can import your listings, reservations, calendars, guests and owners for you.</p>
+      <div class="choices">
+        <div class="choice" onclick="go(3)"><b>Import from my current PMS</b><span>Connect your Guesty, Lodgify, Hostfully, OwnerRez… account. Takes a few minutes.</span></div>
+        <div class="choice" onclick="alert('Demo: manual setup is not part of this mock-up.')"><b>Start from scratch</b><span>Add listings manually or from Airbnb / Vrbo.</span></div>
+      </div>
+    </section>
+    <section class="card hidden" id="s3">
+      <h1>Connect your current PMS</h1><p class="lead">Sign in to your current system. Your credentials go straight to our secure import partner and never pass through Hostaway.</p>
+      <div id="token-box" class="hidden"><label>Demo session token (tk_…)</label><input id="token-in" placeholder="tk_..."><button onclick="startAuth(document.getElementById('token-in').value.trim())">Start</button>
+        <p class="muted">This mock-up is a static page, so it can't mint a token itself. In production Hostaway's backend calls <span class="mono">POST https://api.deck.co/v2/token</span>. Open this page with <span class="mono">?token=tk_…</span>.</p></div>
+      <iframe id="deck-frame" class="hidden" title="Connect your PMS" allow="clipboard-write"></iframe>
+      <div id="auth-err" class="err hidden"></div>
+    </section>
+    <section class="card hidden" id="s4">
+      <h1>Importing your data</h1><p class="lead">You can keep setting up Hostaway; we'll let you know when the import is done.</p>
+      <ul class="prog" id="prog"></ul>
+      <p class="muted">Progress bars are illustrative in this mock-up; the real import runs in Deck. Import run: <span class="mono" id="wrun">-</span> · Credential: <span class="mono" id="cred">-</span></p>
+    </section>
+  </main>
+</div>
+<script>
+const AUTH_ORIGIN = "https://auth.components.deck.co";
+const WORKFLOW_ID = "wflo_Mv1Joi10ObkPVMRe";
+const SOURCES = ["src_ARv8oS7CVYhb6bbk","src_UWZVbDKF0vcv5R03","src_Z5d5QDfhVkwON7il","src_2anDOxPk0TEbgfOr","src_zjKQ0xPt1WPceAII",
+  "src_Mw8UgS7QziqoCiCt","src_j7hFzFrlUBsBP3Os","src_KFwPlvP7Rm9i41NA","src_WIRl5lyxFNPomsk2","src_A9PCAIWCwAqEGkFG",
+  "src_WlyVa46W4JmJ8bUZ","src_U1WC1KcfomN29LDz","src_L0C96f6QjOYiblR6"];
+const params = new URLSearchParams(location.search);
+let started = false;
+
+function go(n){
+  for (let i=1;i<=4;i++){ document.getElementById("s"+i).classList.toggle("hidden", i!==n); }
+  document.querySelectorAll("#steps li").forEach(li=>{ const s=+li.dataset.s; li.classList.toggle("on", s===n); li.classList.toggle("done", s<n); });
+  if (n===3 && !started){ const t = params.get("token"); if (t) startAuth(t); else document.getElementById("token-box").classList.remove("hidden"); }
+}
+
+function startAuth(token){
+  if (!token) return;
+  started = true;
+  document.getElementById("token-box").classList.add("hidden");
+  const f = document.getElementById("deck-frame");
+  f.classList.remove("hidden");
+  f.src = AUTH_ORIGIN + "/";
+  window.addEventListener("message", (e) => {
+    if (e.origin !== AUTH_ORIGIN) return;
+    const m = e.data || {};
+    if (m.type === "READY") {
+      f.contentWindow.postMessage({ type: "INIT", payload: {
+        token, sourceId: SOURCES, sourceConfig: null, credentialId: null,
+        externalId: "hostaway_demo_" + (document.getElementById("company").value || "customer").toLowerCase().replace(/[^a-z0-9]+/g,"_"),
+        taskId: null, taskInput: null, workflowId: WORKFLOW_ID, workflowInput: null, closeAfterStep: null,
+        showStepProgress: true, appearance: { theme: "default", variables: { colorPrimary: "#ff6a3d", borderRadius: "8px" } },
+        taskRunView: "status", language: "en-US", showCloseButton: false, credentialPersistence: false, mode: "auth" } }, AUTH_ORIGIN);
+    } else if (m.type === "RESIZE" && m.payload && m.payload.height) {
+      f.style.height = Math.max(520, m.payload.height) + "px";
+    } else if (m.type === "SUCCESS") {
+      const p = m.payload || {};
+      document.getElementById("wrun").textContent = p.workflowRunId || "-";
+      document.getElementById("cred").textContent = p.credentialId || "-";
+      showImport();
+    } else if (m.type === "ERROR") {
+      const p = m.payload || {}; const el = document.getElementById("auth-err");
+      el.textContent = "Connection error: " + (p.code || "") + " " + (p.message || ""); el.classList.remove("hidden");
+    }
+  });
+}
+
+function showImport(){
+  go(4);
+  const items = [["Signed in to your PMS",1],["Company profile & users",2],["Listings",3],["Owners",4],["Listing details, photos & channels",6],["Reservations & guests",8],["Rates & availability calendar",10]];
+  const ul = document.getElementById("prog");
+  ul.innerHTML = items.map(([t],i)=>`<li><span>${t}</span><span class="pill" id="p${i}">Queued</span></li>`).join("");
+  items.forEach(([,sec],i)=>{
+    setTimeout(()=>{ const el=document.getElementById("p"+i); el.textContent="Importing"; el.className="pill run"; }, (sec-1)*1500);
+    setTimeout(()=>{ const el=document.getElementById("p"+i); el.textContent="Done"; el.className="pill ok"; }, sec*1500+600);
+  });
+}
+if (params.get("step")) go(+params.get("step"));
+</script>
+</body>
+</html>
