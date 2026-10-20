@@ -306,7 +306,6 @@ const API = "https://api.deck.co/v2";
 const WORKFLOW_ID = "wflo_Mv1Joi10ObkPVMRe";
 const SOURCE_ID = "src_ARv8oS7CVYhb6bbk";
 const params = new URLSearchParams(location.search);
-const hash = new URLSearchParams(location.hash.slice(1));
 const LIVE = params.get("mock") !== "1";   // live Deck run by default; ?mock=1 plays the scripted version
 const STEP_OVERRIDES = ["log_in","fetch_account_profile","extract_listings","fetch_owners","fetch_listing_details","fetch_listing_reservations","fetch_listing_calendar"];
 const ORDER = ["home","select","link","mfa","migrate"];
@@ -331,18 +330,23 @@ function go(id){
 }
 function back(){ const i=ORDER.indexOf(cur); if(i>0) go(ORDER[Math.max(0,i-1)]); }
 
-async function getToken(){
-  if (_tok) return _tok;
-  const t = hash.get("token") || params.get("token");
-  if (!t) throw new Error("this demo link has no Deck session. Run mint-demo-link.sh and open the link it prints");
-  return (_tok = t);
+const TOKEN_URL = "https://hostaway-demo-token-504154196290.us-east4.run.app/token";
+
+// Fresh 30-minute session token from the demo token service on each load, and again if one expires.
+async function getToken(fresh){
+  if (_tok && !fresh) return _tok;
+  const r = await fetch(TOKEN_URL, { cache:"no-store" }).catch(() => null);
+  const j = r && r.ok ? await r.json() : null;
+  if (!j || !j.token) throw new Error("couldn't start a secure Deck session. Try again in a moment");
+  return (_tok = j.token);
 }
 
-async function api(path, opts = {}){
+async function api(path, opts = {}, retried){
   const token = await getToken();
   const r = await fetch(API + path, { ...opts, cache:"no-store", headers:{ "Authorization":"Bearer " + token, "Content-Type":"application/json" } });
   const j = await r.json().catch(() => ({}));
-  if (r.status === 401) throw new Error("the Deck session expired. Mint a new demo link");
+  if (r.status === 401 && !retried){ await getToken(true); return api(path, opts, true); }
+  if (r.status === 401) throw new Error("the Deck session expired. Reload the page");
   if (!r.ok) throw new Error((j.errors && j.errors[0] && j.errors[0].message) || ("Deck returned HTTP " + r.status));
   return j;
 }
