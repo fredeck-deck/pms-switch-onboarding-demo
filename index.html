@@ -105,6 +105,12 @@ h1.ttl{font-size:25px;line-height:1.14;margin-bottom:6px}
 .secure{display:flex;gap:10px;align-items:flex-start;background:var(--ok-soft);border:1px solid #c7f0db;color:#067647;border-radius:13px;padding:12px 13px;font-size:12.5px;font-weight:500;margin:14px 0 0}
 .cspin{width:20px;height:20px;flex:0 0 20px;border-radius:50%;border:3px solid var(--peach);border-top-color:var(--orange);animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+[hidden]{display:none!important}
+.pbtn:disabled{cursor:default}
+.pbtn.busy{display:flex;align-items:center;justify-content:center;gap:10px;background:#ff8f45;box-shadow:none}
+.bspin{width:18px;height:18px;flex:0 0 18px;border-radius:50%;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;animation:spin .8s linear infinite}
+.busy-note{text-align:center;font-size:12.5px;color:var(--muted);margin:9px 0 0}
+input:disabled{opacity:.6}
 #deck-frame{width:100%;flex:1;min-height:460px;border:0;background:#fff}
 .token-box{background:var(--cream);border:1px dashed var(--line2);border-radius:14px;padding:16px;margin-top:14px}
 .err{background:#fef3f0;color:#b42318;border:1px solid #f6cfc5;padding:12px;border-radius:12px;margin-top:12px;font-size:13px}
@@ -247,7 +253,7 @@ h1.ttl{font-size:25px;line-height:1.14;margin-bottom:6px}
           <div id="auth-err" class="err" hidden></div>
         </div>
         <div style="flex:1"></div>
-        <div class="foot"><button class="pbtn" id="connect-btn" onclick="connectGuesty()">Connect Guesty &amp; migrate</button></div>
+        <div class="foot"><button class="pbtn" id="connect-btn" onclick="connectGuesty()">Connect Guesty &amp; migrate</button><p class="busy-note" id="connect-note" hidden>Securely signing in to Guesty. This takes about 20 seconds.</p></div>
       </section>
 
       <!-- MFA INTERACTION -->
@@ -333,6 +339,13 @@ function back(){ const i=ORDER.indexOf(cur); if(i>0) go(ORDER[Math.max(0,i-1)]);
 const TOKEN_URL = "https://hostaway-demo-token-504154196290.us-east4.run.app/token";
 
 // Fresh 30-minute session token from the demo token service on each load, and again if one expires.
+function busy(btn, label){ btn.disabled = true; btn.classList.add("busy"); btn.innerHTML = '<span class="bspin"></span>' + label; }
+function idle(btn, label){ btn.disabled = false; btn.classList.remove("busy"); btn.textContent = label; }
+function lockForm(on){
+  ["g-email","g-pass"].forEach(id => document.getElementById(id).disabled = on);
+  document.getElementById("connect-note").hidden = !on;
+}
+
 async function getToken(fresh){
   if (_tok && !fresh) return _tok;
   const r = await fetch(TOKEN_URL, { cache:"no-store" }).catch(() => null);
@@ -381,7 +394,7 @@ function showMfa(interaction, retry){
   const err = document.getElementById("mfa-err");
   err.hidden = !retry; if (retry) err.textContent = "That code didn't work. Check the latest code and try again.";
   if (interaction.message) document.getElementById("mfa-msg").textContent = interaction.message;
-  const btn = document.getElementById("mfa-btn"); btn.disabled = false; btn.textContent = "Verify & continue";
+  idle(document.getElementById("mfa-btn"), "Verify & continue");
   go("mfa");
   setTimeout(()=>{ const el=document.getElementById("mfa-code"); if(el) el.focus(); }, 350);
 }
@@ -398,11 +411,11 @@ async function connectGuesty(){
   const email = document.getElementById("g-email").value.trim();
   const pass  = document.getElementById("g-pass").value;
   if (!email || !pass){ err.textContent = "Enter your Guesty email and password."; err.hidden = false; return; }
-  const orig = btn.textContent; btn.disabled = true;
-  btn.innerHTML = '<span class="cspin" style="border-color:rgba(255,255,255,.45);border-top-color:#fff;vertical-align:-4px"></span> Connecting to Guesty…';
-  const fail = (m) => { btn.disabled = false; btn.textContent = orig; err.textContent = "Couldn't connect: " + m; err.hidden = false; };
+  const orig = btn.textContent;
+  busy(btn, "Connecting to Guesty…"); lockForm(true);
+  const fail = (m) => { idle(btn, orig); lockForm(false); err.textContent = "Couldn't connect: " + m; err.hidden = false; };
   try{
-    if (!LIVE){ await sleep(900); btn.disabled = false; btn.textContent = orig; go("mfa"); return; }
+    if (!LIVE){ await sleep(900); idle(btn, orig); lockForm(false); go("mfa"); return; }
     const cred = await api("/credentials", { method:"POST", body: JSON.stringify({
       source_id: SOURCE_ID, auth_method:"username_password",
       auth_credentials:{ username: email, password: pass },
@@ -413,9 +426,9 @@ async function connectGuesty(){
     const run = await api("/workflows/" + WORKFLOW_ID + "/run", { method:"POST", body: JSON.stringify({ steps }) });
     _runId = run.id;
     document.getElementById("wrun").textContent = run.id;
-    btn.innerHTML = '<span class="cspin" style="border-color:rgba(255,255,255,.45);border-top-color:#fff;vertical-align:-4px"></span> Signing in to Guesty…';
+    busy(btn, "Signing in to Guesty…");
     const res = await waitForLogin(false);
-    if (!res.error){ btn.disabled = false; btn.textContent = orig; }
+    if (!res.error){ idle(btn, orig); lockForm(false); }
     await afterLogin(res, fail);
   }catch(e){ fail(e.message || e); }
 }
@@ -426,9 +439,8 @@ async function submitMfa(){
   if (!/^\d{6}$/.test(code)){ err.textContent = "Enter the 6-digit code from Guesty."; err.hidden = false; return; }
   err.hidden = true;
   const btn = document.getElementById("mfa-btn");
-  btn.disabled = true;
-  btn.innerHTML = '<span class="cspin" style="border-color:rgba(255,255,255,.45);border-top-color:#fff;vertical-align:-4px"></span> Verifying…';
-  const fail = (m) => { btn.disabled = false; btn.textContent = "Verify & continue"; err.textContent = "Couldn't verify: " + m; err.hidden = false; };
+  busy(btn, "Verifying…");
+  const fail = (m) => { idle(btn, "Verify & continue"); err.textContent = "Couldn't verify: " + m; err.hidden = false; };
   try{
     if (!LIVE){ await sleep(700); showMigration(null); return; }
     await api("/task-runs/" + _loginRun + "/interaction", { method:"POST", body: JSON.stringify({ input:{ code } }) });
@@ -497,7 +509,8 @@ function fakeFallback(){
   const bar = document.getElementById("mig-bar");
   STEPS.forEach((_,i)=>{
     setTimeout(()=>{ setRow(i,"running"); bar.style.width = Math.min(92, ((i+1)/STEPS.length)*86) + "%"; }, i*1600);
-    setTimeout(()=>{ setRow(i,"completed"); }, i*1600 + 1100);
+    setTimeout(()=>{ setRow(i,"completed"); document.getElementById("mini-count").textContent = (i+1) + " / " + STEPS.length;
+      document.getElementById("mini-stat").textContent = "Importing — " + (i+1) + " of " + STEPS.length + " complete"; }, i*1600 + 1100);
   });
   setTimeout(finish, STEPS.length*1600 + 1400);
 }
