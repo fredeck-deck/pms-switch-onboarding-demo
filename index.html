@@ -266,7 +266,7 @@ h1.ttl{font-size:25px;line-height:1.14;margin-bottom:6px}
             <input id="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="● ● ● ● ● ●" style="letter-spacing:.35em;font-size:21px;text-align:center;font-weight:700">
           </div>
           <div id="mfa-err" class="err" hidden></div>
-          <p class="muted" style="font-size:12.5px;margin-top:16px">Didn't get a code? <a href="#" onclick="return false" style="font-weight:600">Resend</a> · Deck relays this challenge from Guesty and never sees your code.</p>
+          <p class="muted" style="font-size:12.5px;margin-top:16px">Didn't get a code? <a href="#" onclick="return false" style="font-weight:600">Resend</a> · Deck passes this code to Guesty to finish signing you in.</p>
         </div>
         <div style="flex:1"></div>
         <div class="foot"><button class="pbtn" id="mfa-btn" onclick="submitMfa()">Verify &amp; continue</button></div>
@@ -306,7 +306,9 @@ const API = "https://api.deck.co/v2";
 const WORKFLOW_ID = "wflo_Mv1Joi10ObkPVMRe";
 const SOURCE_ID = "src_ARv8oS7CVYhb6bbk";
 const params = new URLSearchParams(location.search);
-const LIVE = params.get("live") === "1";   // default is a fully scripted demo; ?live=1&token=tk_… drives a real Deck run
+const hash = new URLSearchParams(location.hash.slice(1));
+const LIVE = params.get("mock") !== "1";   // live Deck run by default; ?mock=1 plays the scripted version
+const STEP_OVERRIDES = ["log_in","fetch_account_profile","extract_listings","fetch_owners","fetch_listing_details","fetch_listing_reservations","fetch_listing_calendar"];
 const ORDER = ["home","select","link","mfa","migrate"];
 const STEPS = [
   {name:"fetch_account_profile", title:"Company profile & users", sub:"Account, team and roles"},
@@ -316,7 +318,7 @@ const STEPS = [
   {name:"fetch_listing_reservations", title:"Reservations & guests", sub:"Past and upcoming bookings"},
   {name:"fetch_listing_calendar", title:"Rates & availability",   sub:"Nightly rates, min-stays, blocks"},
 ];
-let cur = "home", _tok = null, _runId = null, _credId = null;
+let cur = "home", _tok = null, _runId = null, _credId = null, _loginRun = null;
 
 // live clock
 (function clk(){ const d=new Date(); document.getElementById("clock").textContent = d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}); setTimeout(clk, 20000); })();
@@ -326,17 +328,64 @@ function go(id){
   cur = id;
   document.getElementById("back").classList.toggle("show", id!=="home" && id!=="migrate" && id!=="mfa");
   document.getElementById("body").scrollTop = 0;
-  if (id==="link" && LIVE) getToken().catch(()=>{});   // pre-warm the session token
 }
 function back(){ const i=ORDER.indexOf(cur); if(i>0) go(ORDER[Math.max(0,i-1)]); }
 
 async function getToken(){
   if (_tok) return _tok;
-  const t = params.get("token"); if (t) return (_tok = t);
-  const r = await fetch("token.json?cb=" + Date.now(), {cache:"no-store"});
-  if (!r.ok) throw new Error("secure session not ready");
-  const j = await r.json(); if (!j || !j.token) throw new Error("secure session not ready");
-  return (_tok = j.token);
+  const t = hash.get("token") || params.get("token");
+  if (!t) throw new Error("this demo link has no Deck session. Run mint-demo-link.sh and open the link it prints");
+  return (_tok = t);
+}
+
+async function api(path, opts = {}){
+  const token = await getToken();
+  const r = await fetch(API + path, { ...opts, cache:"no-store", headers:{ "Authorization":"Bearer " + token, "Content-Type":"application/json" } });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) throw new Error("the Deck session expired. Mint a new demo link");
+  if (!r.ok) throw new Error((j.errors && j.errors[0] && j.errors[0].message) || ("Deck returned HTTP " + r.status));
+  return j;
+}
+
+const loginStep = (w) => (w.steps || []).find(s => s.name === "log_in") || {};
+
+// Poll the workflow until its log_in step needs a code, finishes, or fails.
+// After a code is submitted, waitForLogin(true) treats a fresh interaction_required as a rejected code.
+async function waitForLogin(afterSubmit){
+  let sawRunning = false;
+  const t0 = Date.now();
+  while (Date.now() - t0 < 10*60*1000){
+    const w = await api("/workflow-runs/" + _runId);
+    const st = loginStep(w);
+    const tr0 = (st.task_runs || []).slice(-1)[0];
+    if (tr0) _loginRun = tr0.task_run_id;
+    if (st.status === "running") sawRunning = true;
+    if (st.status === "completed") return { done:true };
+    if (st.status === "failed" || ["failed","canceled"].includes(w.status))
+      return { error: (st.errors && st.errors[0] && st.errors[0].message) || "Guesty sign-in failed" };
+    if (st.status === "interaction_required" && (!afterSubmit || sawRunning)){
+      const tr = await api("/task-runs/" + _loginRun);
+      return { mfa: tr.interaction || {}, retry: afterSubmit };
+    }
+    await sleep(2000);
+  }
+  return { error: "Guesty sign-in is taking too long" };
+}
+
+function showMfa(interaction, retry){
+  document.getElementById("mfa-code").value = "";
+  const err = document.getElementById("mfa-err");
+  err.hidden = !retry; if (retry) err.textContent = "That code didn't work. Check the latest code and try again.";
+  if (interaction.message) document.getElementById("mfa-msg").textContent = interaction.message;
+  const btn = document.getElementById("mfa-btn"); btn.disabled = false; btn.textContent = "Verify & continue";
+  go("mfa");
+  setTimeout(()=>{ const el=document.getElementById("mfa-code"); if(el) el.focus(); }, 350);
+}
+
+async function afterLogin(res, fail){
+  if (res.mfa) return showMfa(res.mfa, res.retry);
+  if (res.done) return showMigration(_runId);
+  fail(res.error);
 }
 
 async function connectGuesty(){
@@ -347,32 +396,24 @@ async function connectGuesty(){
   if (!email || !pass){ err.textContent = "Enter your Guesty email and password."; err.hidden = false; return; }
   const orig = btn.textContent; btn.disabled = true;
   btn.innerHTML = '<span class="cspin" style="border-color:rgba(255,255,255,.45);border-top-color:#fff;vertical-align:-4px"></span> Connecting to Guesty…';
+  const fail = (m) => { btn.disabled = false; btn.textContent = orig; err.textContent = "Couldn't connect: " + m; err.hidden = false; };
   try{
     if (!LIVE){ await sleep(900); btn.disabled = false; btn.textContent = orig; go("mfa"); return; }
-    const token = await getToken();
-    const H = { "Authorization":"Bearer " + token, "Content-Type":"application/json" };
-    // Create the credential (headless — our own UI, no Deck-branded picker).
-    const cRes = await fetch(API + "/credentials", { method:"POST", headers:H, body: JSON.stringify({
+    const cred = await api("/credentials", { method:"POST", body: JSON.stringify({
       source_id: SOURCE_ID, auth_method:"username_password",
       auth_credentials:{ username: email, password: pass },
       external_id: "hostaway_demo_" + Date.now() }) });
-    const cred = await cRes.json();
-    if (!cred.id) throw new Error((cred.errors && cred.errors[0] && cred.errors[0].message) || "could not sign in");
     _credId = cred.id;
     document.getElementById("cred").textContent = cred.id;
-    // Guesty requires 2FA — surface the interaction before the run starts.
-    // (Mirrors Deck's task_run.interaction_required {type:"mfa", message,
-    // fields:[{name:"code"}]}. A live headless submit needs the trun id from the
-    // interaction webhook / a server-side receiver; here it's demo-driven.)
-    btn.disabled = false; btn.textContent = orig;
-    document.getElementById("mfa-code").value = "";
-    document.getElementById("mfa-err").hidden = true;
-    go("mfa");
-    setTimeout(()=>{ const el=document.getElementById("mfa-code"); if(el) el.focus(); }, 350);
-  }catch(e){
-    btn.disabled = false; btn.textContent = orig;
-    err.textContent = "Couldn't connect: " + (e.message || e); err.hidden = false;
-  }
+    const steps = STEP_OVERRIDES.map(name => ({ name, credential_id: _credId }));
+    const run = await api("/workflows/" + WORKFLOW_ID + "/run", { method:"POST", body: JSON.stringify({ steps }) });
+    _runId = run.id;
+    document.getElementById("wrun").textContent = run.id;
+    btn.innerHTML = '<span class="cspin" style="border-color:rgba(255,255,255,.45);border-top-color:#fff;vertical-align:-4px"></span> Signing in to Guesty…';
+    const res = await waitForLogin(false);
+    if (!res.error){ btn.disabled = false; btn.textContent = orig; }
+    await afterLogin(res, fail);
+  }catch(e){ fail(e.message || e); }
 }
 
 async function submitMfa(){
@@ -383,21 +424,12 @@ async function submitMfa(){
   const btn = document.getElementById("mfa-btn");
   btn.disabled = true;
   btn.innerHTML = '<span class="cspin" style="border-color:rgba(255,255,255,.45);border-top-color:#fff;vertical-align:-4px"></span> Verifying…';
+  const fail = (m) => { btn.disabled = false; btn.textContent = "Verify & continue"; err.textContent = "Couldn't verify: " + m; err.hidden = false; };
   try{
     if (!LIVE){ await sleep(700); showMigration(null); return; }
-    // Code accepted — now start the real migration workflow.
-    const token = await getToken();
-    const H = { "Authorization":"Bearer " + token, "Content-Type":"application/json" };
-    const rRes = await fetch(API + "/workflows/" + WORKFLOW_ID + "/run", { method:"POST", headers:H,
-      body: JSON.stringify({ credential_id: _credId }) });
-    const run = await rRes.json();
-    _runId = run.id;
-    document.getElementById("wrun").textContent = run.id || "—";
-    showMigration(run.id);
-  }catch(e){
-    btn.disabled = false; btn.textContent = "Verify & continue";
-    err.textContent = "Couldn't verify: " + (e.message || e); err.hidden = false;
-  }
+    await api("/task-runs/" + _loginRun + "/interaction", { method:"POST", body: JSON.stringify({ input:{ code } }) });
+    await afterLogin(await waitForLogin(true), fail);
+  }catch(e){ fail(e.message || e); }
 }
 
 // Render the migration checklist, then drive it from the REAL Deck run status.
