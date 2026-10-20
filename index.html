@@ -149,6 +149,9 @@ h1.ttl{font-size:25px;line-height:1.14;margin-bottom:6px}
 @keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
 .bar{height:8px;border-radius:999px;background:var(--peach);overflow:hidden;margin:16px 0 20px}
 .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#fd6300,#ff9d28);border-radius:999px;transition:width .6s cubic-bezier(.3,.7,.3,1)}
+.bar.live i{min-width:8%;background:linear-gradient(90deg,#fd6300,#ffb36b,#fd6300);background-size:200% 100%;animation:shimmer 1.3s linear infinite}
+@keyframes shimmer{from{background-position:200% 0}to{background-position:0 0}}
+.sspin.sm{display:inline-block;width:11px;height:11px;border-width:2px;vertical-align:-1px;margin-right:6px}
 .prog{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:9px}
 .prog li{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 13px}
 .prog .pi{width:32px;height:32px;flex:0 0 32px;border-radius:9px;background:var(--cream);display:grid;place-items:center;color:var(--muted);font-size:15px}
@@ -486,16 +489,26 @@ function showMigration(runId){
   document.getElementById("wrun").closest(".meta").hidden = !LIVE;
   const ul = document.getElementById("prog");
   ul.innerHTML = STEPS.map((s,i)=>`<li id="r${i}"><div class="pi">○</div><div class="pt"><b>${s.title}</b><span>${s.sub}</span></div><span class="pill" id="p${i}">Queued</span></li>`).join("");
+  setStat("Starting the import…", true);
   if (params.get("fast") === "1") fakeFallback();   // snappy demo mode
   else if (runId) pollRun(runId);
   else fakeFallback();
 }
 
+// Status line under "Setting up your account"; live = spinner + shimmering bar.
+function setStat(text, live){
+  const el = document.getElementById("mini-stat");
+  el.textContent = text;
+  if (live) el.insertAdjacentHTML("afterbegin", '<span class="sspin sm"></span>');
+  document.getElementById("mig-bar").parentElement.classList.toggle("live", !!live);
+}
+const importing = (st) => "Importing " + st.title.toLowerCase() + "…";
+
 function setRow(i, state){
   const r = document.getElementById("r"+i), p = document.getElementById("p"+i);
   if (!r) return;
   if (state === "completed"){ r.className="ok"; r.querySelector(".pi").textContent="✓"; p.textContent="Done"; p.className="pill ok"; }
-  else if (state === "running"){ r.className="run"; r.querySelector(".pi").textContent="↻"; p.textContent="Importing"; p.className="pill run"; }
+  else if (state === "running"){ r.className="run"; r.querySelector(".pi").innerHTML='<span class="sspin"></span>'; p.textContent="Importing"; p.className="pill run"; }
   else if (state === "failed"){ r.className=""; r.querySelector(".pi").textContent="!"; p.textContent="Retrying"; p.className="pill run"; }
   else { r.className=""; r.querySelector(".pi").textContent="○"; p.textContent="Queued"; p.className="pill"; }
 }
@@ -510,13 +523,12 @@ async function pollRun(runId){
     try { w = await (await fetch(API + "/workflow-runs/" + runId, { headers:H, cache:"no-store" })).json(); }
     catch(e){ await sleep(3000); continue; }
     const byName = {}; (w.steps||[]).forEach(s => byName[s.name] = s.status);
-    let done = 0, running = false;
-    STEPS.forEach((st,i)=>{ const s = byName[st.name] || "queued"; setRow(i, s); if (s==="completed") done++; if (s==="running") running=true; });
+    let done = 0;
+    STEPS.forEach((st,i)=>{ const s = byName[st.name] || "queued"; setRow(i, s); if (s==="completed") done++; });
     bar.style.width = Math.round((done/STEPS.length)*100) + "%";
     document.getElementById("mini-count").textContent = done + " / " + STEPS.length;
-    document.getElementById("mini-stat").textContent = running
-      ? "Importing — " + done + " of " + STEPS.length + " complete"
-      : (done > 0 ? done + " of " + STEPS.length + " complete" : "Starting the import…");
+    const now = STEPS.find(st => byName[st.name] === "running");
+    setStat(now ? importing(now) : (done > 0 ? done + " of " + STEPS.length + " complete" : "Starting the import…"), true);
     if (w.status === "completed"){ finish(); return; }
     if (w.status === "failed"){ migFailed(); return; }
     await sleep(3000);
@@ -527,7 +539,7 @@ async function pollRun(runId){
 function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
 
 function migFailed(){
-  document.getElementById("mini-stat").textContent = "Needs attention";
+  setStat("Needs attention", false);
   document.getElementById("mig-sub").textContent = "One step didn't finish — our team has been notified and will complete your setup.";
 }
 
@@ -540,9 +552,9 @@ function toggleSteps(){
 function fakeFallback(){
   const bar = document.getElementById("mig-bar");
   STEPS.forEach((_,i)=>{
-    setTimeout(()=>{ setRow(i,"running"); bar.style.width = Math.min(92, ((i+1)/STEPS.length)*86) + "%"; }, i*1600);
+    setTimeout(()=>{ setRow(i,"running"); setStat(importing(STEPS[i]), true); bar.style.width = Math.min(92, ((i+1)/STEPS.length)*86) + "%"; }, i*1600);
     setTimeout(()=>{ setRow(i,"completed"); document.getElementById("mini-count").textContent = (i+1) + " / " + STEPS.length;
-      document.getElementById("mini-stat").textContent = "Importing — " + (i+1) + " of " + STEPS.length + " complete"; }, i*1600 + 1100);
+    }, i*1600 + 1100);
   });
   setTimeout(finish, STEPS.length*1600 + 1400);
 }
@@ -551,7 +563,7 @@ function finish(){
   document.getElementById("mig-bar").style.width="100%";
   STEPS.forEach((_,i)=>setRow(i,"completed"));
   document.getElementById("mini-count").textContent = STEPS.length + " / " + STEPS.length;
-  document.getElementById("mini-stat").textContent = "Setup complete";
+  setStat("Setup complete", false);
   document.getElementById("mig-title").textContent = "Your Hostaway account is ready 🎉";
   document.getElementById("mig-sub").innerHTML = "Everything from Guesty is now in Hostaway. Welcome aboard — we've sent you a confirmation.";
   document.getElementById("done-foot").hidden=false;
