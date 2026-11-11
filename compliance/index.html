@@ -107,6 +107,8 @@ td,th{white-space:nowrap} td.status{white-space:normal}
 .modal .secure{display:flex;gap:8px;background:var(--peach-soft);border-radius:10px;padding:10px 12px;font-size:12.5px;color:var(--orange-ink);margin-top:14px}
 .modal .err{color:var(--bad);font-size:13px;margin-top:10px}
 .mhead{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.waitline{display:flex;align-items:center;gap:10px;padding:18px 4px;color:var(--ink);font-weight:600}
+#c-code{font-size:22px;letter-spacing:.35em;text-align:center}
 .toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;border-radius:12px;padding:12px 16px;font-weight:600;box-shadow:0 14px 40px -12px rgba(0,0,0,.5);transform:translateY(120px);opacity:0;transition:transform .3s,opacity .3s;z-index:20}
 .toast.on{transform:none;opacity:1}
 </style>
@@ -154,7 +156,7 @@ td,th{white-space:nowrap} td.status{white-space:normal}
         <div class="card-h"><div><h2>Jurisdictions</h2><p>Hostaway files on the government portals where your listings are registered.</p></div></div>
         <div class="juris">
           <svg viewBox="0 0 64 64" class="seal"><circle cx="32" cy="32" r="30" fill="#0b3a5b" stroke="#c9a227" stroke-width="3"/><path d="M14 38c4-3 8-3 12 0s8 3 12 0 8-3 12 0" fill="none" stroke="#fff" stroke-width="2.4"/><path d="M14 44c4-3 8-3 12 0s8 3 12 0 8-3 12 0" fill="none" stroke="#7fb3d5" stroke-width="2"/><path d="M32 14l4 10H28z" fill="#fff"/><rect x="31" y="23" width="2" height="12" fill="#fff"/></svg>
-          <div class="t"><b>Seabrook County</b><div>Transient Occupancy Tax (10%) + Tourism Improvement District (2%) · STR permits · 3 listings</div></div>
+          <div class="t"><b>Seabrook County</b><div>Transient Occupancy Tax (10%) + Tourism Improvement District (2%) · STR permits · 3 listings</div><div id="conn-detail"></div></div>
           <span id="conn-pill" class="pill mute">Not connected</span>
           <button class="btn primary" id="connect">Connect portal</button>
         </div>
@@ -180,7 +182,7 @@ td,th{white-space:nowrap} td.status{white-space:normal}
       </section>
 
       <section class="card">
-        <div class="card-h"><div><h2>Activity</h2><p>Every filing runs on the county portal through Deck. Each line carries its Deck run ID.</p></div></div>
+        <div class="card-h"><div><h2>Activity</h2><p>Sign-in happens once; every filing runs in that same county portal session through Deck. Each line carries its Deck run ID.</p></div></div>
         <ul class="log" id="log"><li class="empty">Nothing yet.</li></ul>
       </section>
     </main>
@@ -193,12 +195,22 @@ td,th{white-space:nowrap} td.status{white-space:normal}
       <svg viewBox="0 0 64 64" class="seal"><circle cx="32" cy="32" r="30" fill="#0b3a5b" stroke="#c9a227" stroke-width="3"/><path d="M14 38c4-3 8-3 12 0s8 3 12 0 8-3 12 0" fill="none" stroke="#fff" stroke-width="2.4"/><path d="M14 44c4-3 8-3 12 0s8 3 12 0 8-3 12 0" fill="none" stroke="#7fb3d5" stroke-width="2"/><path d="M32 14l4 10H28z" fill="#fff"/><rect x="31" y="23" width="2" height="12" fill="#fff"/></svg>
       <div><h3>Connect Seabrook County</h3><div class="by">Short-Term Rental Program portal</div></div>
     </div>
-    <p>Sign in once with your county operator account. Hostaway files returns and renewals for you from then on.</p>
-    <label for="c-email">Operator email</label>
-    <input id="c-email" type="email" value="ops@coastlinestays.example">
-    <label for="c-pass">Password</label>
-    <input id="c-pass" type="password" placeholder="••••••••">
-    <div class="secure">🔒 Your login is encrypted and used only to file on this portal.</div>
+    <div id="c-step-login">
+      <p>Sign in once with your county operator account. Hostaway files returns and renewals for you from then on.</p>
+      <label for="c-email">Operator email</label>
+      <input id="c-email" type="email" value="ops@coastlinestays.example">
+      <label for="c-pass">Password</label>
+      <input id="c-pass" type="password" placeholder="••••••••">
+      <div class="secure">🔒 Your login is encrypted and used only to file on this portal.</div>
+    </div>
+    <div id="c-step-code" hidden>
+      <p id="c-code-msg">Seabrook County emailed a 6-digit verification code to the address on file.</p>
+      <label for="c-code">Verification code</label>
+      <input id="c-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456">
+    </div>
+    <div id="c-step-wait" hidden>
+      <div class="waitline"><span class="sspin"></span><span id="c-wait-text">Signing in to Seabrook County…</span></div>
+    </div>
     <div class="err" id="c-err" hidden></div>
     <div class="row"><button type="button" class="btn" id="c-cancel">Cancel</button><button class="btn primary" id="c-submit">Connect</button></div>
   </form>
@@ -207,13 +219,15 @@ td,th{white-space:nowrap} td.status{white-space:normal}
 
 <script>
 const API = "https://api.deck.co/v2";
-const TOKEN_URL = "https://hostaway-demo-token-504154196290.us-east4.run.app/token";
+const SERVICE = "https://hostaway-demo-token-504154196290.us-east4.run.app";
+const TOKEN_URL = SERVICE + "/token";
 const SOURCE_ID = "src_S9Mgwn9HjsLAZh8c";
 const TAX_TASK = "task_haibEUCcCqiqw5EQ";
 const RENEW_TASK = "task_8WWxaZbFNW5nEnjO";
+const SIGNIN_TASK = "task_QTyeAyeowdeGvOC7";
 const SIGNER = "Dana Whitfield";
 const LIVE = new URLSearchParams(location.search).get("mock") !== "1";
-const KEY = "hostaway_compliance_demo_v1";
+const KEY = "hostaway_compliance_demo_v2";
 
 // Hostaway's own data for the three listings. Dates mirror the county portal (relative to today).
 const DAY = 86400000;
@@ -239,6 +253,7 @@ const r2 = (n) => Math.round(n * 100) / 100;
 const estTax = (l) => { const t = l.gross - l.exempt; return r2(r2(t * 0.10) + r2(t * 0.02)); };
 const renewable = (l) => daysLeft(l.expires) <= 90;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const errMsg = (r, fallback) => (r && r.errors && r.errors[0] && r.errors[0].message) || fallback;
 
 // state: credential + per-job results, kept across reloads so a recording can be resumed
 let st = (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (_) { return {}; } })();
@@ -276,26 +291,29 @@ function toast(msg){ const t = document.getElementById("toast"); t.textContent =
 // ---------- render ----------
 function statusCell(job, idle){
   if (!job) return idle;
+  if (job.state === "waiting") return `<span class="pill mute">Queued · next in session</span>`;
   if (job.state === "queued") return `<span class="pill run"><span class="sspin"></span>Starting</span>`;
   if (job.state === "running") return `<span class="pill run"><span class="sspin"></span>${job.kind === "tax" ? "Filing on county portal" : "Renewing on county portal"}</span>`;
   if (job.state === "failed") return `<span class="pill bad">Needs attention</span><div class="res">${job.error || "The portal did not accept it."}</div>`;
   const o = job.output || {};
   if (job.kind === "tax") return `<span class="pill ok">✓ ${o.status === "already_filed" ? "Already filed" : "Filed"} · ${money(o.total_due)} ${o.payment_status === "Paid" ? "paid" : ""}</span>
-      <div class="res">Confirmation <b>${o.confirmation_number}</b> · Receipt PDF saved</div>`;
+      <div class="res">Confirmation <b>${o.confirmation_number}</b> · ${job.run && LIVE ? `<a href="${SERVICE}/file?run=${job.run}" target="_blank" rel="noopener">Receipt PDF</a>` : "Receipt PDF saved"}</div>`;
   return `<span class="pill ok">✓ Renewed to ${fmt(o.new_expiration_date + "T12:00:00")}</span>
-      <div class="res">Confirmation <b>${o.confirmation_number}</b> · ${money(o.fee_paid)} paid · Certificate PDF saved</div>`;
+      <div class="res">Confirmation <b>${o.confirmation_number}</b> · ${money(o.fee_paid)} paid · ${job.run && LIVE ? `<a href="${SERVICE}/file?run=${job.run}" target="_blank" rel="noopener">Permit certificate</a>` : "Certificate PDF saved"}</div>`;
 }
 
 function render(){
-  const connected = !!st.cred;
+  const connected = !!(st.cred && st.session);
   document.getElementById("conn-pill").className = "pill " + (connected ? "ok" : "mute");
-  document.getElementById("conn-pill").textContent = connected ? "✓ Connected" : "Not connected";
+  document.getElementById("conn-pill").textContent = connected ? "✓ Signed in" : "Not connected";
+  document.getElementById("conn-detail").innerHTML = connected
+    ? `<span class="res">Session open <code>${st.session}</code>${st.permitsFound ? ` · ${st.permitsFound} permits on file` : ""}</span>` : "";
   document.getElementById("connect").textContent = connected ? "Disconnect" : "Connect portal";
   document.getElementById("connect").className = "btn" + (connected ? "" : " primary");
 
   document.getElementById("tax-title").textContent = `Occupancy tax · ${PERIOD_LABEL}`;
   document.getElementById("tax-sub").textContent = `Due ${fmt(DUE)} · figures from your ${PERIOD_LABEL} reservations in Hostaway`;
-  const busy = (k) => st.jobs[k] && (st.jobs[k].state === "queued" || st.jobs[k].state === "running");
+  const busy = (k) => st.jobs[k] && ["waiting", "queued", "running"].includes(st.jobs[k].state);
   const done = (k) => st.jobs[k] && st.jobs[k].state === "completed";
 
   document.getElementById("tax-rows").innerHTML = LISTINGS.map((l) => {
@@ -327,62 +345,146 @@ function render(){
   fa.disabled = !connected || open.length === 0 || open.some((l) => busy("tax:" + l.id));
 }
 
-// ---------- connect ----------
+// ---------- connect: sign-in task (with the portal's code step) opens the session ----------
 const scrim = document.getElementById("scrim");
-document.getElementById("connect").onclick = () => {
-  if (st.cred) { st = { jobs:{} }; save(); log("Disconnected Seabrook County"); render(); return; }
-  document.getElementById("c-err").hidden = true; scrim.classList.add("on"); document.getElementById("c-pass").focus();
+let _signinRun = null, _mode = "login";
+function modalStep(step, waitText){
+  _mode = step;
+  for (const id of ["login", "code", "wait"]) document.getElementById("c-step-" + id).hidden = id !== step;
+  const btn = document.getElementById("c-submit");
+  btn.hidden = step === "wait";
+  btn.textContent = step === "code" ? "Verify" : "Connect";
+  if (waitText) document.getElementById("c-wait-text").textContent = waitText;
+  if (step === "code") setTimeout(() => document.getElementById("c-code").focus(), 50);
+}
+function modalErr(msg){ const e = document.getElementById("c-err"); e.textContent = msg || ""; e.hidden = !msg; }
+
+document.getElementById("connect").onclick = async () => {
+  if (st.cred) {
+    const sess = st.session;
+    st = { jobs:{} }; save(); render();
+    if (LIVE && sess) api(`/sessions/${sess}/end`, { method:"POST" }).catch(() => {});
+    log(`Signed out of Seabrook County${sess ? ` and closed <code>${sess}</code>` : ""}`);
+    return;
+  }
+  modalErr(""); modalStep("login"); document.getElementById("c-pass").value = ""; document.getElementById("c-code").value = "";
+  scrim.classList.add("on"); document.getElementById("c-pass").focus();
 };
 document.getElementById("c-cancel").onclick = () => scrim.classList.remove("on");
+
+// Poll the sign-in run until it needs a code, finishes, or fails. After a code is submitted, a fresh
+// interaction_required (seen only after the run went back to running) means the code was rejected.
+async function waitSignin(afterCode){
+  let sawRunning = false;
+  const t0 = Date.now();
+  while (Date.now() - t0 < 5 * 60 * 1000) {
+    await sleep(1500);
+    const r = await api("/task-runs/" + _signinRun);
+    if (r.status === "running") sawRunning = true;
+    if (r.status === "interaction_required" && (!afterCode || sawRunning)) return { code: r.interaction || {}, retry: afterCode };
+    if (r.status === "completed") return r.result === "success" ? { done: r } : { error: errMsg(r, "Sign-in did not complete.") };
+    if (["failed", "canceled"].includes(r.status)) return { error: errMsg(r, "Sign-in failed.") };
+  }
+  return { error: "Sign-in is taking too long." };
+}
+
+async function afterSignin(res){
+  if (res.code) {
+    modalStep("code"); modalErr(res.retry ? "That code didn't work. Check the latest email and try again." : "");
+    log(`Seabrook County asked for a verification code <code>${_signinRun}</code>`);
+    return;
+  }
+  if (res.error) { modalStep("login"); modalErr("Couldn't sign in: " + res.error); log(`Sign-in failed: ${res.error}`); return; }
+  const out = res.done.output || {};
+  st.session = res.done.session_id; st.permitsFound = (out.permits || []).length; save();
+  scrim.classList.remove("on");
+  log(`Signed in to Seabrook County as <b>${out.account_name || "operator"}</b> (${out.operator_id || ""}), ${st.permitsFound} permits on file · session <code>${st.session}</code>`);
+  toast("Seabrook County connected");
+  render();
+}
+
 document.getElementById("connect-form").onsubmit = async (e) => {
   e.preventDefault();
-  const email = document.getElementById("c-email").value.trim(), pass = document.getElementById("c-pass").value;
-  const err = document.getElementById("c-err"), btn = document.getElementById("c-submit");
-  if (!email || !pass) { err.textContent = "Enter your operator email and password."; err.hidden = false; return; }
-  btn.disabled = true; btn.textContent = "Connecting…";
-  try {
-    let id = "cred_mock";
-    if (LIVE) {
+  modalErr("");
+  if (_mode === "login") {
+    const email = document.getElementById("c-email").value.trim(), pass = document.getElementById("c-pass").value;
+    if (!email || !pass) return modalErr("Enter your operator email and password.");
+    modalStep("wait", "Signing in to Seabrook County…");
+    try {
+      if (!LIVE) { await sleep(2500); st.cred = "cred_mock"; _signinRun = "trun_demo_signin"; return afterSignin({ code: {} }); }
       const cred = await api("/credentials", { method:"POST", body: JSON.stringify({
         source_id: SOURCE_ID, auth_method:"username_password",
         auth_credentials:{ username: email, password: pass }, external_id: "hostaway_compliance_" + Date.now() }) });
-      id = cred.id;
-    } else await sleep(900);
-    st.cred = id; save();
-    scrim.classList.remove("on");
-    log(`Connected Seabrook County as ${email} <code>${id}</code>`);
-    toast("Seabrook County connected");
-    render();
-  } catch (x) { err.textContent = "Couldn't connect: " + x.message; err.hidden = false; }
-  btn.disabled = false; btn.textContent = "Connect";
+      st.cred = cred.id; save();
+      const run = await api(`/tasks/${SIGNIN_TASK}/run`, { method:"POST", body: JSON.stringify({ credential_id: st.cred, input: {} }) });
+      _signinRun = run.id;
+      log(`Signing in to Seabrook County as ${email} <code>${run.id}</code>`);
+      await afterSignin(await waitSignin(false));
+    } catch (x) { modalStep("login"); modalErr("Couldn't connect: " + x.message); }
+    return;
+  }
+  if (_mode === "code") {
+    const code = document.getElementById("c-code").value.replace(/\D/g, "");
+    if (code.length !== 6) return modalErr("Enter the 6-digit code.");
+    modalStep("wait", "Verifying your code…");
+    try {
+      if (!LIVE) { await sleep(2500); return afterSignin({ done: { session_id: "sess_demo" + Math.random().toString(36).slice(2, 8), output: { account_name: "Coastline Stays LLC", operator_id: "OP-20417", permits: [1, 2, 3] } } }); }
+      await api(`/task-runs/${_signinRun}/interaction`, { method:"POST", body: JSON.stringify({ input: { code } }) });
+      log("Code sent to Seabrook County");
+      await afterSignin(await waitSignin(true));
+    } catch (x) { modalStep("code"); modalErr("Couldn't verify: " + x.message); }
+  }
 };
 
-// ---------- run a job ----------
+// ---------- run a job, one at a time, in the signed-in session ----------
+let chain = Promise.resolve();
+function enqueue(kind, l){
+  const k = kind + ":" + l.id;
+  st.jobs[k] = { kind, state:"waiting" }; save(); render();
+  chain = chain.then(() => runJob(kind, l)).catch(() => {});
+}
+
+async function sessionOpen(){
+  if (!LIVE) return true;
+  try { const s = await api("/sessions/" + st.session); return ["idle", "running", "queued"].includes(s.status); } catch (_) { return false; }
+}
+
 async function runJob(kind, l){
   const k = kind + ":" + l.id;
+  if (!st.session) { st.jobs[k] = { kind, state:"failed", error:"Not signed in to the county portal." }; save(); render(); return; }
   const input = kind === "tax"
     ? { permit_number:l.permit, filing_period:PERIOD, gross_rent:l.gross, exempt_rent:l.exempt, nights_rented:l.nights, signer_name:SIGNER }
     : { permit_number:l.permit, max_occupancy:l.occ, local_contact_name:l.contact, local_contact_phone:l.phone, signer_name:SIGNER };
   const what = kind === "tax" ? `${PERIOD_LABEL} return for ${l.name}` : `permit renewal for ${l.name}`;
   st.jobs[k] = { kind, state:"queued" }; save(); render();
   try {
-    if (!LIVE) return mockJob(k, kind, l, what);
-    const run = await api(`/tasks/${kind === "tax" ? TAX_TASK : RENEW_TASK}/run`, { method:"POST", body: JSON.stringify({ credential_id: st.cred, input }) });
+    if (!LIVE) return await mockJob(k, kind, l, what);
+    if (!(await sessionOpen())) {
+      const old = st.session; st.session = null; st.cred = null;
+      st.jobs[k] = { kind, state:"failed", error:"The county session closed after 10 idle minutes. Connect again to continue." };
+      log(`Session <code>${old}</code> has closed; connect again to keep filing`);
+      save(); render(); return;
+    }
+    // Session reuse needs the org key, so the demo service starts in-session runs (tk_ tokens can't).
+    const rr = await fetch(SERVICE + "/run", { method:"POST", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ task_id: kind === "tax" ? TAX_TASK : RENEW_TASK, session_id: st.session, credential_id: st.cred, input }) });
+    const run = await rr.json().catch(() => ({}));
+    if (!rr.ok || !run.id) throw new Error(run.error || ("HTTP " + rr.status));
     st.jobs[k].run = run.id; save();
-    log(`Started ${what} <code>${run.id}</code>`);
+    log(`Started ${what} in session <code>${st.session}</code> <code>${run.id}</code>`);
     let seenRunning = false;
     for (;;) {
-      await sleep(2000);
+      await sleep(1500);
       const r = await api("/task-runs/" + run.id);
-      if (r.status === "running" && !seenRunning) { seenRunning = true; st.jobs[k].state = "running"; save(); render(); log(`Signing in to Seabrook County and filling in the ${kind === "tax" ? "return" : "renewal"} for ${l.name}`); }
+      if (r.status === "running" && !seenRunning) { seenRunning = true; st.jobs[k].state = "running"; save(); render(); log(`Filling in the ${kind === "tax" ? "return" : "renewal"} for ${l.name} on the signed-in county portal`); }
       if (r.status === "completed") {
         st.jobs[k].state = r.result === "success" ? "completed" : "failed";
         st.jobs[k].output = r.output;
-        if (r.result !== "success") st.jobs[k].error = (r.error && r.error.message) || "The portal did not accept it.";
+        if (r.result !== "success") st.jobs[k].error = errMsg(r, "The portal did not accept it.");
         break;
       }
-      if (["failed", "canceled"].includes(r.status)) { st.jobs[k].state = "failed"; st.jobs[k].error = (r.error && r.error.message) || "The filing did not go through."; break; }
-      if (r.status === "interaction_required") { st.jobs[k].state = "failed"; st.jobs[k].error = "The portal asked for a verification code."; break; }
+      if (["failed", "canceled"].includes(r.status)) { st.jobs[k].state = "failed"; st.jobs[k].error = errMsg(r, "The filing did not go through."); break; }
+      if (r.status === "interaction_required") { st.jobs[k].state = "failed"; st.jobs[k].error = "The portal asked for a verification code again."; break; }
     }
     if (st.jobs[k].state === "completed") {
       const o = st.jobs[k].output;
@@ -397,9 +499,9 @@ async function runJob(kind, l){
 
 async function mockJob(k, kind, l, what){
   const id = "trun_demo" + Math.random().toString(36).slice(2, 10);
-  st.jobs[k].run = id; log(`Started ${what} <code>${id}</code>`);
-  await sleep(1500); st.jobs[k].state = "running"; save(); render(); log(`Signing in to Seabrook County and filling in the ${kind === "tax" ? "return" : "renewal"} for ${l.name}`);
-  await sleep(4500 + Math.random() * 2500);
+  st.jobs[k].run = id; log(`Started ${what} in session <code>${st.session}</code> <code>${id}</code>`);
+  await sleep(1200); st.jobs[k].state = "running"; save(); render(); log(`Filling in the ${kind === "tax" ? "return" : "renewal"} for ${l.name} on the signed-in county portal`);
+  await sleep(4000 + Math.random() * 2000);
   const conf = (kind === "tax" ? "SBC-" : "SBR-") + today.getFullYear() + String(today.getMonth() + 1).padStart(2, "0") + "-" + Math.floor(100000 + Math.random() * 899999);
   const next = new Date(l.expires.getFullYear() + 1, l.expires.getMonth(), l.expires.getDate());
   st.jobs[k].state = "completed";
@@ -416,20 +518,23 @@ document.addEventListener("click", async (e) => {
   const t = e.target.closest("[data-file-tax],[data-renew]");
   if (!t) return;
   e.preventDefault();
-  if (t.dataset.fileTax) return runJob("tax", LISTINGS.find((l) => l.id === t.dataset.fileTax));
-  if (t.dataset.renew) return runJob("renew", LISTINGS.find((l) => l.id === t.dataset.renew));
+  if (t.dataset.fileTax) return enqueue("tax", LISTINGS.find((l) => l.id === t.dataset.fileTax));
+  if (t.dataset.renew) return enqueue("renew", LISTINGS.find((l) => l.id === t.dataset.renew));
 });
 document.getElementById("file-all").onclick = () => {
   const open = LISTINGS.filter((l) => !(st.jobs["tax:" + l.id] && st.jobs["tax:" + l.id].state === "completed"));
-  log(`Filing ${open.length} ${PERIOD_LABEL} returns in parallel`);
-  open.forEach((l) => runJob("tax", l));
+  log(`Queued ${open.length} ${PERIOD_LABEL} returns in the open session`);
+  open.forEach((l) => enqueue("tax", l));
 };
 
 // A reload mid-run: anything still in flight is shown as interrupted rather than spinning forever.
-for (const j of Object.values(st.jobs)) if (j.state === "queued" || j.state === "running") { j.state = "failed"; j.error = "Interrupted by a page reload. Run it again."; }
+for (const j of Object.values(st.jobs)) if (["waiting", "queued", "running"].includes(j.state)) { j.state = "failed"; j.error = "Interrupted by a page reload. Run it again."; }
+if (!st.session) st.cred = null;
 save();
 render();
-if (LIVE) getToken().catch(() => {});
+if (LIVE) getToken().then(async () => {
+  if (st.session && !(await sessionOpen())) { log(`Session <code>${st.session}</code> has closed; connect again`); st.session = null; st.cred = null; save(); render(); }
+}).catch(() => {});
 </script>
 </body>
 </html>
